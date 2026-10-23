@@ -1,0 +1,2507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lessons">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f4f1e8">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --cream:#f4f1e8; --cream2:#ece7d9; --card:#fff;
+    --navy:#20344f; --line:#d8d0bf; --lineSoft:#e7e1d2;
+    --faint:#8a8471; --nowBg:#fdf6e3; --nowBorder:#c9a94a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:'Helvetica Neue',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    background:var(--cream);color:var(--navy);display:flex;flex-direction:column;min-height:100vh}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--navy)}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{width:38px;height:38px;object-fit:contain}
+  .bname{font-size:21px;font-weight:800;letter-spacing:4px}
+  .bsub{font-size:11px;color:var(--faint);letter-spacing:1px;margin-top:2px}
+  .hbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:6px;border-radius:9px;padding:9px 14px;
+    font-size:13.5px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--navy)}
+  .btn.primary{background:var(--navy);color:var(--cream);border-color:var(--navy)}
+  .btn.danger{color:#a04a4a}
+  .btn:disabled{opacity:.5;cursor:default}
+
+  /* layout */
+  .body{display:flex;flex:1;min-height:0;flex-wrap:wrap}
+  aside{width:300px;min-width:260px;background:var(--cream2);border-right:1px solid var(--line);
+    padding:12px;overflow-y:auto;flex-shrink:0}
+  main{flex:1;min-width:300px;padding:26px 30px;overflow-y:auto}
+  @media(max-width:760px){
+    aside{width:100%;min-width:0;border-right:none;border-bottom:1px solid var(--line);max-height:42vh}
+    main{padding:20px 16px}
+  }
+
+  .savebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:7px 20px;background:var(--cream2);border-bottom:1px solid var(--line);
+    font-size:12px;color:var(--faint);font-weight:600}
+  .savedot{width:7px;height:7px;border-radius:50%;background:#4a9b6e;flex-shrink:0;
+    transition:background .2s}
+  .savebar.saving .savedot{background:var(--nowBorder)}
+  .savebar.error .savedot{background:#b4483f}
+  .savebar.error{color:#b4483f}
+  .savesep{opacity:.5}
+  .savebackup{font-weight:500}
+  .savebackup.warn{color:#a07a2e;font-weight:600}
+  @media(max-width:500px){ .savebar{padding:7px 14px;font-size:11.5px} }
+  .nowline{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--faint);
+    font-weight:600;padding:4px 10px 12px}
+  .empty{color:var(--faint);font-size:13px;padding:14px 10px;line-height:1.5}
+
+  .srow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+    background:transparent;border:1px solid transparent;border-radius:10px;padding:12px;
+    margin-bottom:5px;text-align:left;color:var(--navy)}
+  .srow.active{background:var(--card);border-color:var(--line);box-shadow:0 2px 10px rgba(32,52,79,.06)}
+  .srow.now{background:var(--nowBg);border-color:var(--nowBorder)}
+  .sname{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .smeta{font-size:12px;color:var(--faint);display:flex;align-items:center;gap:6px;margin-top:4px}
+  .intag{font-size:11px;color:#3f7a5a;font-weight:700}
+  .nowbadge{background:var(--nowBorder);color:#fff;font-size:10px;font-weight:700;
+    padding:1px 6px;border-radius:5px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--navy);
+    box-shadow:0 0 0 3px rgba(32,52,79,.13);flex-shrink:0}
+  .sright{display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+  /* log page */
+  .loghead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .logname{font-size:25px;font-weight:700;letter-spacing:-.4px}
+  .logslot{font-size:13px;color:var(--faint);margin-top:5px;display:flex;align-items:center;gap:6px}
+  .editpanel{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px;margin-top:16px}
+  .field{display:block;margin-bottom:12px}
+  .flabel{display:block;font-size:12.5px;color:var(--faint);margin-bottom:6px}
+  .inp{width:100%;background:var(--card);border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;color:var(--navy);font-size:15px}
+  .row2{display:flex;gap:10px;flex-wrap:wrap}
+
+  .counter{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:22px 0 14px}
+  .cnum{font-size:56px;font-weight:800;line-height:1;letter-spacing:-2px}
+  .clabel{font-size:13px;color:var(--faint);margin-top:4px}
+  .caside{font-size:14px;color:var(--faint);text-align:right;padding-bottom:6px}
+  .caside strong{color:var(--navy)}
+  .ready{color:var(--navy);font-weight:700}
+  .bar{display:flex;gap:5px;margin-bottom:22px}
+  .tick{flex:1;height:6px;border-radius:3px;background:var(--line)}
+  .tick.on{background:var(--navy)}
+
+  .checkin{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    background:var(--navy);color:var(--cream);border:none;border-radius:12px;padding:18px;
+    font-size:17px;font-weight:700;margin-bottom:12px}
+  .checked{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    background:#e8f2ea;color:#2f6a48;border:1px solid #bcdcc7;border-radius:12px;padding:18px;
+    font-size:16px;font-weight:700;margin-bottom:12px}
+  .dashed{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+    background:transparent;color:var(--faint);border:1px dashed var(--line);border-radius:10px;
+    padding:10px;font-size:13px;font-weight:600;margin-bottom:10px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:22px}
+  .phead{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .small{font-size:13px;color:var(--faint)}
+  .tinp{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 10px;
+    color:var(--navy);font-size:14px}
+  .link{background:none;border:none;color:var(--navy);font-size:12px;font-weight:600;
+    padding:0;text-decoration:underline}
+  .picklist{display:flex;flex-direction:column;gap:4px;max-height:210px;overflow-y:auto;margin-bottom:12px}
+  .pick{display:flex;align-items:center;gap:10px;width:100%;font-size:13px;color:var(--navy);
+    padding:10px;background:var(--cream);border:1px solid var(--lineSoft);border-radius:8px;line-height:1.2}
+  .pick.on{background:#eef3f8;border-color:var(--navy)}
+  .pick.dup{opacity:.45;cursor:default}
+  .box{width:18px;height:18px;min-width:18px;border-radius:5px;border:1.5px solid var(--line);
+    background:var(--card);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    font-size:12px;color:var(--faint)}
+  .box.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .pdate{flex:1;text-align:left}
+  .dupnote{font-size:11px;color:var(--faint);font-style:italic;white-space:nowrap}
+  .manual{margin-top:14px;padding-top:14px;border-top:1px solid var(--lineSoft)}
+
+  h3.sec{font-size:12px;font-weight:700;color:var(--faint);margin:0 0 10px;letter-spacing:1.5px;
+    text-transform:uppercase}
+  .invrow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);
+    border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+  .invname{font-size:15px;font-weight:600}
+  .invsub{font-size:12px;color:var(--faint);margin-top:2px}
+  .newinv{background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:14px}
+  .sent{display:flex;align-items:center;gap:5px;color:#3f7a5a;font-size:13px;font-weight:600}
+  .sentwrap{display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .mailopt.rec{border-color:var(--navy);background:#f7f9fc}
+  .lrow{display:flex;align-items:center;gap:14px;padding:9px 4px;border-bottom:1px solid var(--lineSoft)}
+  .lnum{font-size:13px;font-weight:700;width:34px}
+  .ldate{font-size:14px;flex:1;display:flex;align-items:center;gap:8px}
+  .mtag{font-size:11px;background:var(--cream2);color:var(--faint);padding:1px 7px;border-radius:5px;font-weight:600}
+  .xbtn{background:none;border:none;color:var(--faint);padding:4px;display:flex}
+  section{margin-bottom:24px}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(24,40,56,.5);display:flex;align-items:center;
+    justify-content:center;padding:18px;z-index:50;overflow-y:auto}
+  .modal{background:var(--cream);border:1px solid var(--line);border-radius:16px;padding:22px;
+    width:100%;max-width:400px;box-shadow:0 24px 60px rgba(24,40,56,.35);margin:auto}
+  .modal.wide{max-width:600px;background:var(--cream);border:1px solid var(--line);
+    box-shadow:0 24px 60px rgba(24,40,56,.35);padding:12px;border-radius:18px}
+  .modal.wide .sheet{box-shadow:none;border:1px solid var(--lineSoft)}
+  .paper{background:#ebe9e4;border-radius:10px;border:1px solid var(--lineSoft);padding:24px 22px 20px;
+    font-family:Montserrat,'Helvetica Neue',Arial,sans-serif;color:#3f4757}
+  .pLogo{text-align:center;margin-bottom:20px}
+  .pLogo img{max-width:120px;max-height:110px;object-fit:contain}
+  .pLogo svg{display:block;margin:0 auto}
+  .pLogo .pw{font-weight:700;font-size:20px;margin-top:6px}
+  .pLogo .ps{font-size:8.5px;font-weight:600;letter-spacing:1.6px}
+  .pTop{display:flex;justify-content:space-between;gap:16px;margin-bottom:24px}
+  .pTitle{font-size:16px;font-weight:700;margin-bottom:10px}
+  .pLbl{font-size:12.5px;font-weight:600;margin-top:7px}
+  .pVal{font-size:12.5px;color:#5f6574}
+  .pWho{max-width:56%;padding-top:20px;min-width:0}
+  .pName{font-size:14.5px;word-break:break-word}
+  .pSub{font-size:12px;color:#5f6574;margin-top:5px}
+  .pEmail{margin-top:8px}
+  .pTable{width:100%;border-collapse:collapse}
+  .pTable th{font-size:12.5px;font-weight:700;text-align:left;padding:6px 3px;border-bottom:1.5px solid #3f4757;color:#3f4757;
+    text-transform:none;letter-spacing:0}
+  .pTable th.c{text-align:center} .pTable th.r{text-align:right}
+  .pTable td{font-size:12.5px;padding:8px 3px;border-bottom:1px solid #cfccc4;vertical-align:top;color:#3f4757}
+  .pTable td.c{text-align:center;color:#5f6574;white-space:nowrap}
+  .pTable td.r{text-align:right;white-space:nowrap}
+  .paper tr.freeRow td{background:rgba(255,255,255,.4)}
+  .paper .noteIn{background:rgba(255,255,255,.55)}
+  .exDesc{width:100%;border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:12.5px;
+    color:#3f4757;background:#fff;font-family:inherit}
+  .addX{display:block;margin-top:10px;font-size:12.5px}
+  .paper .pkg{color:#5f6574}
+  .pTotal{display:flex;justify-content:flex-end;align-items:baseline;gap:20px;margin-top:16px;font-size:13.5px;color:#5f6574}
+  .pTotal strong{font-size:17px;color:#3f4757}
+  .pPay{margin-top:20px;font-size:12.5px;line-height:1.75}
+  .pThanks{font-size:20px;margin-top:28px}
+  .pFoot{font-size:10.5px;letter-spacing:1.6px;color:#5f6574;margin-top:16px;line-height:1.7}
+  /* Scale the invoice with its own width, using the same proportions as the
+     receipt image, so both look alike on any screen. (1cqw = 1% of the page.) */
+  @supports (width:1cqw){
+    .paper{container-type:inline-size;padding:5% 5% 4.5%;line-height:1.35}
+    .pLogo{margin-bottom:9cqw}
+    .pLogo img{max-width:18cqw;max-height:16cqw}
+    .pLogo svg{width:10.2cqw;height:10.2cqw}
+    .pLogo .pw{font-size:3.33cqw;margin-top:.8cqw}
+    .pLogo .ps{font-size:max(6px,1.33cqw);letter-spacing:.22cqw}
+    .pTop{gap:3cqw;margin-bottom:6.5cqw}
+    .pTop > div:first-child{flex:1}
+    .pWho{flex:0 0 45.6%;max-width:45.6%;padding-top:3cqw}
+    .pTitle{font-size:2.9cqw;margin-bottom:2.4cqw}
+    .pLbl{font-size:2.44cqw;margin-top:1.6cqw}
+    .pVal{font-size:2.44cqw}
+    .pName{font-size:2.78cqw}
+    .pSub{font-size:2.33cqw;margin-top:1.2cqw}
+    .pEmail{font-size:2.67cqw;margin-top:1.4cqw}
+    .pTable th{font-size:2.44cqw;padding:.8cqw .3cqw}
+    .pTable td{font-size:2.33cqw;padding:1.3cqw .3cqw}
+    .pTable td.c{font-size:2.22cqw}
+    .paper .amtWrap{font-size:2.33cqw;gap:.4cqw}
+    .paper .amtIn{width:max(52px,12cqw);font-size:max(11px,2.33cqw);padding:.5cqw .9cqw;border-radius:5px}
+    .paper .noteIn{font-size:max(10px,1.9cqw);padding:.45cqw .9cqw;margin-top:.7cqw;border-radius:5px}
+    .paper .exDesc{font-size:max(11px,2.33cqw);padding:.5cqw .9cqw;border-radius:5px}
+    .paper .xbtn svg{width:max(11px,2.2cqw);height:max(11px,2.2cqw)}
+    .paper .addX{font-size:max(10px,2.1cqw);margin-top:1.6cqw}
+    .paper .pkg{font-size:1.9cqw;margin-top:2.6cqw}
+    .pTotal{font-size:2.67cqw;gap:5cqw;margin-top:4.5cqw}
+    .pTotal strong{font-size:3.1cqw}
+    .pPay{font-size:2.22cqw;margin-top:6cqw;line-height:1.6}
+    .pPay .pLbl{font-size:2.44cqw;margin-bottom:.6cqw}
+    .pThanks{font-size:4cqw;margin-top:8cqw}
+    .pFoot{font-size:2.1cqw;letter-spacing:.29cqw;margin-top:10cqw;line-height:1.5}
+  }
+  .rateBox{margin-bottom:12px}
+  .rf{flex:1;min-width:140px}
+  .moneyIn{display:flex;align-items:center;gap:6px;color:var(--faint)}
+  .moneyIn .inp{flex:1}
+  .rtag{display:block;font-size:11.5px;margin-top:5px;color:var(--faint)}
+  .rcustom{color:#a07a2e;font-weight:600}
+  .rstudio{color:var(--faint)}
+  .rateHint{font-size:12.5px;line-height:1.5;color:var(--faint);background:var(--cream);border:1px solid var(--lineSoft);
+    border-radius:9px;padding:9px 12px;margin-top:-2px}
+  .rateHint b{color:var(--navy)}
+  .modal.wide .acts{justify-content:center}
+  .rcptView{border-radius:10px;overflow:hidden;border:1px solid var(--lineSoft);background:#ebe9e4}
+  .rcptView img{display:block;width:100%;height:auto}
+  .rcptLoading{padding:120px 20px;text-align:center;color:var(--faint);font-size:14px}
+  .modal h2{font-size:20px;margin:0 0 16px}
+  .acts{display:flex;gap:9px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+  .hint{text-align:center;font-size:12px;color:var(--faint);margin-top:10px;line-height:1.5;padding:0 10px}
+
+  /* invoice sheet */
+  .sheet{background:#fff;border-radius:12px;padding:38px 42px;box-shadow:0 24px 60px rgba(24,40,56,.4)}
+  .itop{text-align:center}
+  .itop img{max-width:150px;max-height:150px;object-fit:contain;margin-bottom:6px}
+  .iword{font-size:25px;font-weight:800;letter-spacing:7px;margin-top:8px}
+  .istudio{font-size:13px;letter-spacing:4px;text-transform:uppercase;margin-top:2px}
+  .isite{font-size:11px;color:#8a94a3;margin-top:8px}
+  .irule{height:2px;background:var(--navy);margin:20px 0 18px}
+  .imeta{display:flex;justify-content:space-between;gap:14px;margin-bottom:15px}
+  .ikick{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:#9aa3b0;font-weight:700}
+  .istrong{font-size:15px;font-weight:700;margin-top:3px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th{font-size:10.5px;color:#9aa3b0;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+    padding:8px 4px;border-bottom:2px solid var(--navy)}
+  td{font-size:13px;padding:9px 4px;border-bottom:1px solid #eef0f3}
+  .c{text-align:center;color:#8a94a3}.r{text-align:right}
+  .pkg{text-align:right;font-size:12px;color:#8a94a3;margin-top:14px;font-style:italic}
+  .ctotal{color:var(--faint);font-weight:500}
+  .ifor{font-size:13px;color:#8a94a3;margin-top:3px}
+  .sendTo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+    margin-top:12px;font-size:13px;color:var(--faint)}
+  .sendTo strong{color:var(--navy)}
+  .warnTxt{color:#a07a2e;font-weight:600}
+  .sendHint{flex-basis:100%;font-size:12px;color:var(--faint);line-height:1.4}
+  .logoSlot{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .lsPrev{width:64px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    background:var(--cream);border-radius:7px;overflow:hidden}
+  .lsPrev img{max-width:100%;max-height:100%;object-fit:contain}
+  .lsPrev span{font-size:11px;color:var(--faint)}
+  .lsText{flex:1;min-width:0}
+  .lsTitle{font-size:13.5px;font-weight:650;color:var(--navy)}
+  .lsHint{font-size:11.5px;color:var(--faint);margin-top:2px;line-height:1.35}
+  .lsBtns{display:flex;align-items:center;gap:10px;margin-top:7px}
+  .lsBtns .btn{padding:6px 12px;font-size:12.5px}
+  .filePick{display:flex;align-items:center;justify-content:center;position:relative;
+    border:1.5px dashed var(--navy);border-radius:10px;padding:16px;background:var(--card);
+    color:var(--navy);font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+  .filePick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+  .rsOk{margin-top:12px;padding:12px 14px;background:#f2f8f3;border:1px solid #cfe3d5;border-radius:10px;
+    font-size:13px;line-height:1.55;color:var(--navy)}
+  .rsErr{margin-top:12px;padding:12px 14px;background:#fbf0ee;border:1px solid #ecc9c3;border-radius:10px;
+    font-size:13px;color:#a2463c}
+  .rsWarn{margin-top:6px;color:#a07a2e;font-weight:600}
+  .dangerFill{background:#a2463c;border-color:#a2463c}
+  #confirmRoot .overlay{z-index:90}
+  .cycHead{font-size:12px;font-weight:700;color:var(--navy);padding:4px 4px 6px}
+  .grp{border:1px solid var(--line);border-radius:10px;margin-top:10px;background:var(--card);overflow:hidden}
+  .grp.isPaid{background:#f7faf7;border-color:#d3e4d8}
+  .grpHead{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 4px;flex-wrap:wrap}
+  .grpTog{flex:1;min-width:180px;display:flex;align-items:center;gap:10px;background:none;border:none;
+    padding:6px 8px;text-align:left;color:var(--navy)}
+  .gside{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto}
+  .gside .btn{padding:7px 12px;font-size:13px}
+  .grpInfo{font-size:13px;color:var(--navy);padding:12px 4px 8px;font-weight:600}
+  .grpActs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:10px;
+    border-bottom:1px solid var(--lineSoft);margin-bottom:2px}
+  .cycBox{margin-bottom:6px}
+  .cycTop{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:2px 0 4px}
+  .cycLink{display:block;margin:2px 4px 8px}
+  .paidSum{display:flex;align-items:center;gap:6px;margin-top:12px;padding:10px 14px;border-radius:10px;
+    background:#f7faf7;border:1px solid #d3e4d8;color:#2f6a48;font-size:13px;font-weight:600}
+  .chev{display:inline-block;font-size:18px;line-height:1;color:var(--faint);transition:transform .15s;width:12px}
+  .chev.open{transform:rotate(90deg)}
+  .gmain{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .gtitle{font-size:14px;font-weight:650}
+  .gcount{font-size:12px;font-weight:500;color:var(--faint)}
+  .gspan{font-size:12px;color:var(--faint)}
+  .gstat{font-size:12px;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:4px}
+  .gstat.paid{color:#2f6a48}
+  .gstat.sent{color:#a07a2e}
+  .gstat.draft{color:var(--faint)}
+  .grpBody{padding:0 14px 10px;border-top:1px solid var(--lineSoft)}
+  .lockNote{font-size:11.5px;color:var(--faint);padding:10px 4px 2px;line-height:1.45}
+  .paidFold{display:flex;align-items:center;gap:10px;width:100%;background:#f7faf7;
+    border:1px solid #d3e4d8;border-radius:10px;padding:11px 14px;margin-bottom:8px;
+    font-size:14px;font-weight:600;color:#2f6a48;text-align:left}
+  @media(max-width:500px){ .gside{margin-left:30px} }
+  .amtWrap{display:inline-flex;align-items:center;gap:2px;color:#8a94a3;font-size:13px}
+  .amtIn{width:74px;text-align:right;border:1px solid var(--line);border-radius:7px;
+    padding:5px 7px;font-size:13px;color:#20344f;background:#fff}
+  .noteIn{width:100%;margin-top:5px;border:1px dashed var(--line);border-radius:7px;
+    padding:4px 7px;font-size:12px;color:#5c6775;background:transparent}
+  .noteIn::placeholder{color:#b9b2a2}
+  tr.freeRow td{background:#f4f8f4}
+  .paidtag{color:#2f6a48}
+  .sigPrev{display:flex;align-items:center;gap:12px;margin-top:10px;background:#fff;
+    border:1px solid var(--line);border-radius:9px;padding:10px}
+  .sigPrev img{max-height:48px;max-width:170px;object-fit:contain}
+  .rcTop{display:flex;justify-content:space-between;gap:20px;margin-top:4px}
+  .rcTitle{font-size:30px;font-weight:800;letter-spacing:1px}
+  .rcEmail{font-size:14px;color:#8a94a3;margin-top:4px}
+  .rcTotals{margin-top:18px}
+  .rcRow{display:flex;justify-content:flex-end;gap:26px;font-size:14px;margin-top:9px}
+  .rcRow span{color:#5c6775}
+  .rcRow strong{min-width:90px;text-align:right}
+  .rcThanks{font-size:20px;margin-top:52px}
+  .rcSig{max-height:70px;margin-top:16px;display:block}
+  .rcFoot{font-size:12px;letter-spacing:1px;color:#5c6775;margin-top:18px;line-height:1.6}
+  .rateBar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:var(--cream);
+    border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-top:14px}
+  .pay{margin-top:26px;padding:16px 18px;background:#f7f8fa;border-radius:10px}
+  .payrow{display:flex;justify-content:space-between;gap:14px;font-size:13px;margin-top:7px;color:#8a94a3}
+  .payrow strong{color:#20344f}
+  .totwrap{display:flex;justify-content:flex-end;margin-top:16px}
+  .tot{display:flex;align-items:center;gap:26px;background:var(--navy);color:var(--cream);
+    border-radius:10px;padding:13px 20px}
+  .totlbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.8}
+  .totval{font-size:23px;font-weight:800}
+  .ifoot{display:flex;justify-content:space-between;gap:14px;margin-top:26px;padding-top:15px;
+    border-top:1px solid #eef0f3;font-size:11px;color:#9aa3b0}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);
+    color:var(--cream);padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;
+    z-index:80;box-shadow:0 10px 30px rgba(24,40,56,.3)}
+  #mailRoot .overlay{z-index:70}
+  .mailopt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;
+    text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:13px 15px;margin-bottom:8px;color:var(--navy)}
+  .mailopt:hover{border-color:var(--navy)}
+  .mailname{font-size:15px;font-weight:650}
+  .mailsub{font-size:12px;color:var(--faint);line-height:1.35}
+  .step{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+    color:var(--faint);margin:14px 0 8px}
+  .step:first-of-type{margin-top:4px}
+  svg{flex-shrink:0}
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;color:var(--faint);text-align:center;padding:50px 20px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span id="brandMark"></span>
+    <div>
+      <div class="bname" id="brandName">LESSONS</div>
+      <div class="bsub" id="brandSub">lesson check-in</div>
+    </div>
+  </div>
+  <div class="hbtns">
+    <button class="btn" onclick="openSettings()">Settings</button>
+    <button class="btn" onclick="exportData()">Back up</button>
+    <button class="btn" onclick="importData()">Restore</button>
+    <button class="btn primary" onclick="openAdd()">+ New student</button>
+  </div>
+</header>
+
+<div id="saveBar" class="savebar">
+  <span class="savedot" id="saveDot"></span>
+  <span id="saveText">All changes saved</span>
+  <span class="savesep">·</span>
+  <span id="backupText" class="savebackup"></span>
+</div>
+
+<div class="body">
+  <aside id="roster"></aside>
+  <main id="page"></main>
+</div>
+
+<input type="file" id="logoFile" accept="image/*" style="display:none">
+<input type="file" id="markFile" accept="image/*" style="display:none">
+<input type="file" id="sigFile" accept="image/*" style="display:none">
+<div id="modalRoot"></div>
+<div id="mailRoot"></div>
+<div id="confirmRoot"></div>
+
+<script>
+/* ────────── constants & helpers ────────── */
+const BLOCK = 10;
+const KEY = "lessons.students.v1";
+const LOGO = "lessons.logo.v1";            // logo with text — invoices & receipts
+const LOGO_MARK = "lessons.logomark.v1";   // logo without text — the app header
+const SET  = "lessons.settings.v1";
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const DAYS_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+const uid = () => Math.random().toString(36).slice(2,10);
+const money = n => "$" + (Number(n)||0).toLocaleString("en-AU", {minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = s => String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function isoLocal(d){ // local date, not UTC — avoids off-by-one
+  const p = n => String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+const todayISO = () => isoLocal(new Date());
+function fmtDate(s){
+  const [y,m,d] = s.split("-").map(Number);
+  return new Date(y, m-1, d).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+}
+function fmtTime(t){
+  if(!t) return "";
+  const [h,m] = t.split(":").map(Number);
+  const ap = h < 12 ? "am" : "pm", hh = h % 12 === 0 ? 12 : h % 12;
+  return hh + ":" + String(m).padStart(2,"0") + ap;
+}
+function minsUntil(slot){
+  if(!slot || slot.day == null || !slot.time) return Infinity;
+  const d = new Date();
+  const cur = d.getDay()*1440 + d.getHours()*60 + d.getMinutes();
+  const [h,m] = slot.time.split(":").map(Number);
+  let diff = (slot.day*1440 + h*60 + m) - cur;
+  if(diff < -720) diff += 7*1440;
+  return diff;
+}
+const slotLabel = s => (!s || s.day == null || !s.time) ? "No time set" : DAYS[s.day] + " " + fmtTime(s.time);
+const checkedToday = s => s.lessons.some(l => l.date === todayISO());
+/* Invoices are stored as a list: {id, from, to, sent}
+   "from"/"to" are 1-based lesson numbers, so any size invoice is possible. */
+function migrate(s){
+  if(!Array.isArray(s.invoices)){
+    s.invoices = [];
+    (s.invoicedBlocks || []).slice().sort((a,b) => a-b).forEach(b => {
+      s.invoices.push({ id: uid(), from: b*BLOCK+1, to: b*BLOCK+BLOCK, sent: true });
+    });
+    delete s.invoicedBlocks;
+  }
+  if(!Array.isArray(s.lessons)) s.lessons = [];
+  // one email per student: fold in a parent email entered in an earlier version
+  if(!String(s.email||"").trim() && String(s.parentEmail||"").trim()) s.email = String(s.parentEmail).trim();
+  delete s.parentEmail;
+  return s;
+}
+// rate resolution: student's own rate if set, otherwise the studio default
+function unitRate(s, count){
+  const num = v => { const n = Number(v); return (isFinite(n) && n > 0) ? n : 0; };
+  if(count >= BLOCK)
+    return num(s.blockRate) || num(settings.blockRate) || num(s.rate) || num(settings.rate) || 0;
+  return num(s.rate) || num(settings.rate) || 0;
+}
+// an invoice can carry its own rate, fixed at the time it was created
+function invRate(s, inv){
+  const n = Number(inv && inv.rate);
+  if(isFinite(n) && n > 0) return n;
+  return unitRate(s, inv ? (inv.to - inv.from + 1) : 0);
+}
+/* Line items for an invoice. Each lesson gets the invoice rate unless it has
+   been adjusted in inv.adj (keyed by lesson number) — a free lesson, a longer
+   one, or a note shown on the invoice. */
+function invLines(s, inv){
+  const RATE = invRate(s, inv);
+  const adj = inv.adj || {};
+  const out = [];
+  for(let n = inv.from; n <= inv.to; n++){
+    const l = s.lessons[n-1];
+    const a = adj[n] || {};
+    const amt = (a.amt === 0 || (isFinite(Number(a.amt)) && Number(a.amt) > 0)) ? Number(a.amt) : RATE;
+    out.push({
+      n,                          // running lesson number (attendance log)
+      k: n - inv.from + 1,        // number on this invoice — always starts at 1
+      date: l ? l.date : "",
+      makeup: !!(l && l.makeup),
+      note: (a.note || "").trim(),
+      amount: amt,
+      adjusted: a.amt !== undefined && Number(a.amt) !== RATE
+    });
+  }
+  return out;
+}
+// occasional extra items on an invoice (ensemble, special event…)
+const invExtras    = inv => Array.isArray(inv && inv.extras) ? inv.extras : [];
+const lessonsTotal = (s, inv) => invLines(s, inv).reduce((t, l) => t + l.amount, 0);
+const extrasTotal  = inv => invExtras(inv).reduce((t, e) => t + (Number(e.amount) || 0), 0);
+const invTotal     = (s, inv) => lessonsTotal(s, inv) + extrasTotal(inv);
+// blank, $0 extra items (added but never filled in) are left off documents and emails
+const printExtras  = inv => invExtras(inv).filter(e => String(e.desc || "").trim() || Number(e.amount) > 0);
+const extraLabel   = e => String(e.desc || "").trim() || "Extra item";
+function extrasPhrase(inv){
+  const ex = printExtras(inv);
+  return ex.length ? ", plus " + ex.map(extraLabel).join(", ") : "";
+}
+function addExtra(){
+  const inv = ctxInv(); if(!inv) return;
+  const e = { id: uid(), desc: "", amount: 0 };
+  inv.extras = invExtras(inv).concat([e]);
+  save(); openInvoice(inv.id);
+  setTimeout(() => { const el = document.querySelector('#modalRoot .exDesc[data-x="'+e.id+'"]'); if(el) el.focus(); }, 60);
+}
+function setExtra(xid, field, v){
+  const inv = ctxInv(); if(!inv) return;
+  const e = invExtras(inv).find(x => x.id === xid); if(!e) return;
+  if(field === "amount") e.amount = Math.max(0, Number(v) || 0); else e.desc = String(v).trim();
+  save(); refreshInvoiceSheet();
+}
+function removeExtra(xid){
+  const inv = ctxInv(); if(!inv) return;
+  inv.extras = invExtras(inv).filter(x => x.id !== xid);
+  if(!inv.extras.length) delete inv.extras;
+  save(); openInvoice(inv.id);
+}
+// date range an invoice covers, e.g. "20 Jun – 10 Oct 2026"
+function invSpan(s, inv){
+  const a = s.lessons[inv.from-1], b = s.lessons[inv.to-1];
+  if(!a || !b) return "";
+  if(a.date === b.date) return fmtDate(a.date);
+  const [ya,ma,da] = a.date.split("-").map(Number), [yb] = b.date.split("-").map(Number);
+  const first = ya === yb
+    ? new Date(ya, ma-1, da).toLocaleDateString(undefined, {day:"numeric", month:"short"})
+    : fmtDate(a.date);
+  return first + " – " + fmtDate(b.date);
+}
+function lineLabel(l){
+  let t = "Guitar lesson " + l.k;
+  if(l.makeup) t += " (make-up)";
+  if(l.note) t += " — " + l.note;
+  else if(l.amount === 0) t += " — complimentary";
+  return t;
+}
+// set or clear one line's amount / note
+function setLineAdj(nLesson, field, value){
+  const s = ctxStudent(), inv = ctxInv(); if(!s || !inv) return;
+  inv.adj = inv.adj || {};
+  const cur = inv.adj[nLesson] || {};
+  if(field === "amt"){
+    const v = String(value).trim();
+    if(v === "") delete cur.amt; else cur.amt = Math.max(0, Number(v) || 0);
+  } else {
+    const v = String(value).trim();
+    if(v === "") delete cur.note; else cur.note = v;
+  }
+  if(cur.amt === undefined && !cur.note) delete inv.adj[nLesson];
+  else inv.adj[nLesson] = cur;
+  save();
+  refreshInvoiceSheet();
+}
+function resetLines(){
+  const inv = ctxInv(); if(!inv) return;
+  delete inv.adj;
+  save();
+  // put each line's note box back to empty too
+  document.querySelectorAll("#modalRoot .noteIn").forEach(n => { n.value = ""; });
+  refreshInvoiceSheet();
+}
+// how many lessons are already covered by an issued invoice
+function invoicedTo(s){
+  return (s.invoices || []).reduce((m, i) => Math.max(m, i.to), 0);
+}
+const uninvoiced = s => Math.max(0, s.lessons.length - invoicedTo(s));
+// a full block is waiting to be billed
+const countDue = s => uninvoiced(s) >= BLOCK ? 1 : 0;
+function pastWeekly(slot, count){
+  if(!slot || slot.day == null) return [];
+  const out = [], d = new Date();
+  d.setHours(12,0,0,0);
+  d.setDate(d.getDate() - ((d.getDay() - slot.day + 7) % 7));
+  for(let i = 0; i < count; i++){ out.push(isoLocal(d)); d.setDate(d.getDate() - 7); }
+  return out;
+}
+
+/* ────────── icons ────────── */
+const I = {
+  clock:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  checkSm:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  cal:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18M12 15v4M10 17h4"/></svg>',
+  pencil:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  trash:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
+  file:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6v20h12V8z"/><path d="M14 2v6h6"/></svg>',
+  mail:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>',
+  dl:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 19h16"/></svg>'
+};
+function mandala(size, color){
+  const c = color || "#20344f";
+  let s = '<svg width="'+size+'" height="'+size+'" viewBox="0 0 100 100" fill="none">';
+  s += '<circle cx="50" cy="50" r="47" stroke="'+c+'" stroke-width="1.6"/><circle cx="50" cy="50" r="41" stroke="'+c+'" stroke-width="1.6"/>';
+  for(let i = 0; i < 36; i++){
+    const a = i/36*Math.PI*2, a2 = (i+.5)/36*Math.PI*2;
+    s += '<line x1="'+(50+41*Math.cos(a))+'" y1="'+(50+41*Math.sin(a))+'" x2="'+(50+44.5*Math.cos(a2))+'" y2="'+(50+44.5*Math.sin(a2))+'" stroke="'+c+'" stroke-width="1"/>';
+  }
+  for(let i = 0; i < 12; i++)
+    s += '<g transform="rotate('+(i/12*360)+' 50 50)"><path d="M50 12 C56 22 56 30 50 38 C44 30 44 22 50 12 Z" stroke="'+c+'" stroke-width="1.4"/></g>';
+  s += '<circle cx="50" cy="50" r="21" stroke="'+c+'" stroke-width="1.6"/>';
+  for(let i = 0; i < 8; i++)
+    s += '<g transform="rotate('+(i/8*360)+' 50 50)"><path d="M50 31 C54 37 54 43 50 48 C46 43 46 37 50 31 Z" stroke="'+c+'" stroke-width="1.3"/><circle cx="50" cy="35" r="1.7" fill="'+c+'"/></g>';
+  return s + '<circle cx="50" cy="50" r="4" fill="'+c+'"/></svg>';
+}
+function ring(v){
+  const r = 9, c = 2*Math.PI*r, off = c*(1 - v/BLOCK);
+  return '<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#d8d0bf" stroke-width="3"/>'+
+    '<circle cx="12" cy="12" r="9" fill="none" stroke="#20344f" stroke-width="3" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'" stroke-linecap="round" transform="rotate(-90 12 12)"/></svg>';
+}
+
+/* ────────── state ────────── */
+let students = [];
+let logoData = null;
+let markData = null;
+let settings = { studio:"", rate:0, blockRate:0, payName:"", bsb:"", acct:"", abn:"", sig:null };
+// the studio's name, from Settings — nothing is built into the app
+const studioName = () => String(settings.studio || "").trim();
+// "Riverside Music Studio" → ["Riverside", "Music Studio"]: first word large, the rest small
+function studioParts(){ const w = studioName().split(/\s+/).filter(Boolean); return [w[0] || "", w.slice(1).join(" ")]; }
+function signOff(){
+  const n = studioName();
+  return n ? "\n\nThank you for studying with " + n + ".\n\nKind regards,\n" + n : "\n\nThank you!\n\nKind regards,";
+}
+let selectedId = null;
+let ui = { edit:false, backfill:false, partial:false, paidOpen:false, openGroups:{}, count:4, picked:{}, bDate:todayISO() };
+
+function load(){
+  try{ students = JSON.parse(localStorage.getItem(KEY)) || []; }catch(e){ students = []; }
+  students.forEach(migrate);
+  try{ logoData = localStorage.getItem(LOGO) || null; }catch(e){ logoData = null; }
+  try{ markData = localStorage.getItem(LOGO_MARK) || null; }catch(e){ markData = null; }
+  try{
+    const raw = JSON.parse(localStorage.getItem(SET) || "null");
+    if(raw) settings = Object.assign(settings, raw);
+  }catch(e){}
+}
+function saveSettings(){
+  try{ localStorage.setItem(SET, JSON.stringify(settings)); }
+  catch(e){ if(!Cloud.on) toast("Could not save settings"); }
+  if(Cloud.on) queueSync();
+}
+const LASTSAVE = "lessons.lastsave.v1";
+const LASTBACKUP = "lessons.lastbackup.v1";
+let saveTimer = null;
+
+function save(){
+  let localOk = true;
+  try{ localStorage.setItem(KEY, JSON.stringify(students)); }catch(e){ localOk = false; }
+  const when = new Date().toISOString();
+  try{ localStorage.setItem(LASTSAVE, when); }catch(e){}
+  if(Cloud.on){ queueSync(); return; }          // account storage is the real save
+  if(localOk) flashSaved(when);
+  else{
+    setSaveState("error", "Not saved — storage may be full");
+    toast("Could not save — browser storage may be full");
+  }
+}
+
+function setSaveState(kind, text){
+  const bar = document.getElementById("saveBar");
+  const t = document.getElementById("saveText");
+  if(!bar || !t) return;
+  bar.classList.remove("saving", "error");
+  if(kind !== "ok") bar.classList.add(kind);
+  t.textContent = text;
+}
+function savedLabel(iso){
+  const where = Cloud.on ? "Saved to your Claude account" : "Saved on this device";
+  if(!iso) return where;
+  const d = new Date(iso);
+  const sameDay = d.toDateString() === new Date().toDateString();
+  return where + " · " + (sameDay
+    ? d.toLocaleTimeString(undefined, {hour:"numeric", minute:"2-digit"})
+    : d.toLocaleDateString(undefined, {day:"numeric", month:"short"}) + " " +
+      d.toLocaleTimeString(undefined, {hour:"numeric", minute:"2-digit"}));
+}
+function flashSaved(when){
+  setSaveState("saving", "Saving…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => setSaveState("ok", savedLabel(when)), 450);
+}
+function refreshBackupLabel(){
+  const el = document.getElementById("backupText");
+  if(!el) return;
+  let iso = null;
+  try{ iso = localStorage.getItem(LASTBACKUP); }catch(e){}
+  if(!iso){
+    el.textContent = "No backup yet";
+    el.className = "savebackup warn";
+    return;
+  }
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  const d = new Date(iso).toLocaleDateString(undefined, {day:"numeric", month:"short", year:"numeric"});
+  el.textContent = "Last backup " + (days === 0 ? "today" : days === 1 ? "yesterday" : days + " days ago") + " (" + d + ")";
+  el.className = "savebackup" + (days >= 30 ? " warn" : "");
+}
+function initSaveBar(){
+  let iso = null;
+  try{ iso = localStorage.getItem(LASTSAVE); }catch(e){}
+  setSaveState("ok", savedLabel(iso));
+  refreshBackupLabel();
+}
+function toast(msg){
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+const getSel = () => students.find(s => s.id === selectedId) || null;
+
+/* ────────── render ────────── */
+function render(){
+  document.getElementById("brandMark").innerHTML =
+    markData ? '<img src="'+markData+'" alt="">' : mandala(38);   // uploaded app logo, or the built-in mandala
+  const [big, rest] = studioParts();
+  document.getElementById("brandName").textContent = (big || "Lessons").toUpperCase();
+  document.getElementById("brandSub").textContent = (rest ? rest + " · " : "") + "lesson check-in";
+  document.title = studioName() ? studioName() + " — Lesson Tracker" : "Lesson Tracker";
+  renderRoster();
+  renderPage();
+}
+
+function renderRoster(){
+  const el = document.getElementById("roster");
+  const d = new Date();
+  let h = '<div class="nowline">'+I.clock+" "+DAYS_FULL[d.getDay()]+", "+
+    fmtTime(d.getHours()+":"+d.getMinutes())+"</div>";
+  if(!students.length){
+    h += '<div class="empty">No students yet. Add your first to start.</div>';
+    el.innerHTML = h; return;
+  }
+  const sorted = students.slice().sort((a,b) => minsUntil(a.slot) - minsUntil(b.slot));
+  sorted.forEach(s => {
+    const cyc = Math.min(uninvoiced(s), BLOCK);
+    const m = minsUntil(s.slot), soon = m <= 60 && m >= -60;
+    const cls = "srow" + (s.id === selectedId ? " active" : "") + (soon ? " now" : "");
+    h += '<button class="'+cls+'" onclick="select(\''+s.id+'\')">'+
+      '<span><span class="sname">'+esc(s.name)+
+        (checkedToday(s) ? '<span class="intag">'+I.checkSm+" in</span>" : "")+'</span>'+
+      '<span class="smeta">'+I.clock+" "+slotLabel(s.slot)+
+        (soon ? '<span class="nowbadge">now</span>' : "")+'</span></span>'+
+      '<span class="sright">'+(countDue(s) ? '<span class="dot" title="Invoice due"></span>' : "")+
+        ring(cyc)+'</span></button>';
+  });
+  el.innerHTML = h;
+}
+
+function renderPage(){
+  const el = document.getElementById("page");
+  const s = getSel();
+  if(!s){
+    el.innerHTML = '<div class="center">'+mandala(72,"#d8d0bf")+
+      "<span>Select a student to check them in.</span></div>";
+    return;
+  }
+  const done = s.lessons.length;
+  const cycle = uninvoiced(s);                    // lessons not yet billed
+  const toNext = Math.max(0, BLOCK - cycle);
+
+  let h = '<div class="loghead"><div><div class="logname">'+esc(s.name)+'</div>'+
+    '<div class="logslot">'+I.clock+" "+slotLabel(s.slot)+
+      (parentName(s) ? '<span class="savesep">·</span>Parent: '+esc(parentName(s)) : "")+'</div></div>'+
+    '<button class="btn" onclick="tog(\'edit\')">'+I.pencil+" "+(ui.edit?"Close":"Edit details")+"</button></div>";
+
+  if(ui.edit){
+    h += '<div class="editpanel">'+
+      '<label class="field"><span class="flabel">Name</span>'+
+        '<input class="inp" value="'+esc(s.name)+'" oninput="edit({name:this.value})"></label>'+
+      '<label class="field"><span class="flabel">Parent / guardian name (optional)</span>'+
+        '<input class="inp" placeholder="e.g. Jane Hii" value="'+esc(s.parent||"")+'" oninput="edit({parent:this.value})"></label>'+
+      '<label class="field"><span class="flabel">'+I.mail+' Email</span>'+
+        '<input class="inp" type="email" placeholder="name@email.com" value="'+esc(s.email||"")+'" oninput="edit({email:this.value})"></label>'+
+      '<div class="small" style="margin:-4px 0 12px;line-height:1.45">Invoices and receipts go to this email. If a parent is filled in, they\'re addressed to the parent, with the student\'s name shown.</div>'+
+      '<div class="row2">'+
+        '<label class="field" style="flex:1;min-width:150px"><span class="flabel">Lesson day</span><select class="inp" onchange="editSlot(\'day\',Number(this.value))">'+
+          DAYS_FULL.map((d,i) => '<option value="'+i+'"'+(s.slot&&s.slot.day===i?" selected":"")+">"+d+"</option>").join("")+
+        "</select></label>"+
+        '<label class="field" style="width:130px"><span class="flabel">Time</span>'+
+          '<input class="inp" type="time" value="'+((s.slot&&s.slot.time)||"16:00")+'" onchange="editSlot(\'time\',this.value)"></label>'+
+      "</div>"+
+      rateFields(s)+
+      '<button class="btn danger" style="width:100%;justify-content:center" onclick="removeStudent()">'+I.trash+" Delete student</button>"+
+    "</div>";
+  }
+
+  h += '<div class="counter"><div><div class="cnum">'+cycle+'</div>'+
+    '<div class="clabel">'+(cycle===1?"lesson":"lessons")+" this cycle"+
+      (done > cycle ? ' · <span class="ctotal">'+done+" in total</span>" : "")+"</div></div>"+
+    '<div class="caside">'+
+    (toNext === 0 ? '<span class="ready">Block complete — invoice ready</span>'
+      : "<strong>"+toNext+"</strong> more until the next invoice")+"</div></div>";
+
+  h += '<div class="bar">';
+  const filled = Math.min(cycle, BLOCK);
+  for(let i = 0; i < BLOCK; i++) h += '<div class="tick'+(i<filled?" on":"")+'"></div>';
+  h += "</div>";
+
+  h += checkedToday(s)
+    ? '<div class="checked">'+I.check+" Checked in today</div>"
+    : '<button class="checkin" onclick="checkIn()">'+I.check+" Check in for today's lesson</button>";
+
+  h += '<button class="dashed" style="margin-bottom:'+(ui.backfill?10:24)+'px" onclick="tog(\'backfill\')">'+I.cal+" Add past lessons (auto-fill weekly dates)</button>";
+  if(ui.backfill) h += backfillPanel(s);
+
+  // ── lessons & invoices, together: each billed batch carries its own invoice ──
+  const billedTo = invoicedTo(s), left = uninvoiced(s);
+  h += "<section><h3 class='sec'>Lessons &amp; invoices</h3>";
+  if(!done) h += '<div class="empty">No lessons logged yet.</div>';
+
+  const lrow = (l, n, locked) =>
+    '<div class="lrow"><span class="lnum">#'+n+'</span><span class="ldate">'+fmtDate(l.date)+
+      (l.makeup ? '<span class="mtag">make-up</span>' : "")+"</span>"+
+      (locked ? "" : '<button class="xbtn" onclick="delLesson(\''+l.id+'\')" title="Remove">'+I.x+"</button>")+"</div>";
+
+  // current cycle — open, with the invoice actions for it
+  if(left > 0){
+    h += '<div class="cycBox">'+
+      '<div class="cycTop"><div class="cycHead">Current cycle · '+left+(left===1?" lesson":" lessons")+
+        ' <span class="gcount">not yet invoiced</span></div>'+
+        (left >= BLOCK
+          ? '<button class="btn primary" onclick="createInvoice('+BLOCK+')">'+I.file+" Invoice lessons "+(billedTo+1)+"–"+(billedTo+BLOCK)+"</button>"
+          : "")+
+      "</div>";
+    if(ui.partial){
+      const max = Math.min(left, BLOCK);
+      h += '<div class="newinv" style="margin:4px 0 10px"><div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">'+
+          '<span class="small">Invoice</span>'+
+          '<input class="tinp" id="invQty" style="width:64px" type="number" inputmode="numeric" min="1" max="'+max+
+            '" value="'+max+'" onfocus="this.select()">'+
+          '<span class="small">'+(max===1?"lesson":"lessons")+" from lesson "+(billedTo+1)+"</span>"+
+          '<button class="btn primary" style="margin-left:auto" onclick="createInvoice()">Create</button>'+
+          '<button class="btn" onclick="tog(\'partial\')">Cancel</button>'+
+        "</div></div>";
+    } else {
+      h += '<button class="link cycLink" onclick="tog(\'partial\')">'+
+        (left >= BLOCK ? "Invoice a different number of lessons" : "Invoice "+left+(left===1?" lesson":" lessons")+" now")+"</button>";
+    }
+    for(let n = done; n > billedTo; n--) h += lrow(s.lessons[n-1], n, false);
+    h += "</div>";
+  } else if(done){
+    h += '<div class="empty" style="padding:6px 4px 12px">All lessons so far are invoiced. New check-ins start the next cycle.</div>';
+  }
+
+  // billed batches — newest first; each one shows its invoice status and buttons
+  s.invoices.slice().reverse().forEach(inv => {
+    const open = !!ui.openGroups[inv.id];
+    const cnt = inv.to - inv.from + 1;
+    const id = "\'"+inv.id+"\'";
+    const rSent = !!(inv.paid && inv.receiptSent);
+    const status = rSent    ? '<span class="gstat paid">'+I.checkSm+" Paid · receipt sent</span>"
+                 : inv.paid ? '<span class="gstat paid">'+I.checkSm+" Paid "+money(inv.paid.amount)+'</span><span class="gstat sent">Receipt not sent</span>'
+                 : inv.sent ? '<span class="gstat sent">Awaiting payment</span>'
+                            : '<span class="gstat draft">Invoice not sent</span>';
+    const quick = rSent    ? ""
+                : inv.paid ? '<button class="btn primary" onclick="openReceipt('+id+')">'+I.file+" Send receipt</button>"
+                : inv.sent ? '<button class="btn primary" onclick="askPaid('+id+')">Record payment</button>'
+                           : '<button class="btn primary" onclick="openInvoice('+id+')">'+I.file+" Open invoice</button>";
+    h += '<div class="grp'+(inv.paid?" isPaid":"")+'">'+
+      '<div class="grpHead">'+
+        '<button class="grpTog" onclick="togGroup('+id+')">'+
+          '<span class="chev'+(open?" open":"")+'">›</span>'+
+          '<span class="gmain"><span class="gtitle">Lessons '+inv.from+"–"+inv.to+
+            ' <span class="gcount">'+cnt+(cnt===1?" lesson":" lessons")+"</span></span>"+
+            '<span class="gspan">'+invSpan(s, inv)+"</span></span>"+
+        "</button>"+
+        (open ? "" : '<span class="gside">'+status+quick+"</span>")+
+      "</div>";
+    if(open){
+      const acts = rSent
+          ? '<button class="btn" onclick="openReceipt('+id+')">'+I.file+" View receipt</button>"+
+            '<button class="btn" onclick="openInvoice('+id+')">'+I.file+" View invoice</button>"+
+            '<button class="link" onclick="unmarkReceiptSent('+id+')">Undo receipt sent</button>'
+        : inv.paid
+          ? '<button class="btn primary" onclick="openReceipt('+id+')">'+I.file+" Send receipt</button>"+
+            '<button class="btn" onclick="markReceiptSent('+id+')">'+I.check+" Mark receipt sent</button>"+
+            '<button class="btn" onclick="openInvoice('+id+')">'+I.file+" View invoice</button>"+
+            '<button class="link" onclick="unmarkPaid('+id+')">Undo payment</button>'
+        : inv.sent
+          ? '<button class="btn primary" onclick="askPaid('+id+')">Record payment</button>'+
+            '<button class="btn" onclick="openInvoice('+id+')">'+I.file+" View invoice</button>"+
+            '<button class="link" onclick="unmarkSent('+id+')">Undo sent</button>'
+          : '<button class="btn primary" onclick="openInvoice('+id+')">'+I.file+" Open invoice</button>"+
+            '<button class="link" onclick="deleteInvoice('+id+')">Delete invoice</button>';
+      h += '<div class="grpBody">'+
+        '<div class="grpInfo">'+
+          (inv.paid ? "Paid "+money(inv.paid.amount)+" on "+fmtDate(inv.paid.on)+
+                      (rSent ? " · receipt sent "+fmtDate(inv.receiptSent) : " · receipt not sent yet")
+                    : inv.sent ? "Invoice sent · "+money(invTotal(s, inv))+" due"
+                               : "Invoice created, not sent yet · "+money(invTotal(s, inv)))+
+        "</div>"+
+        '<div class="grpActs">'+acts+"</div>";
+      for(let n = inv.to; n >= inv.from; n--) if(s.lessons[n-1]) h += lrow(s.lessons[n-1], n, true);
+      h += '<div class="lockNote">These lessons are on an invoice, so they can\'t be removed here. Delete the invoice first if something needs fixing.</div>';
+      h += "</div>";
+    }
+    h += "</div>";
+  });
+
+  // running total of what's been received
+  const paidAll = s.invoices.filter(i => i.paid);
+  if(paidAll.length >= 2){
+    const sum = paidAll.reduce((t, i) => t + (Number(i.paid.amount)||0), 0);
+    h += '<div class="paidSum">'+I.checkSm+" "+paidAll.length+" paid invoice"+(paidAll.length===1?"":"s")+
+         " · "+money(sum)+" received in total</div>";
+  }
+  h += "</section>";
+  el.innerHTML = h;
+  if(ui.edit) paintRateUI(s);
+}
+
+function backfillPanel(s){
+  if(!s.slot || s.slot.day == null)
+    return '<div class="panel"><div class="empty">Set a weekly day and time first.</div></div>';
+
+  return '<div class="panel"><div class="phead"><span class="small">Show past</span>'+
+    '<input class="tinp" id="bfCount" style="width:64px" type="number" min="1" max="52" inputmode="numeric" value="'+ui.count+
+      '" onfocus="this.select()" oninput="setCount(this.value)" onblur="fixCount(this.value)">'+
+    '<span class="small">weeks</span>'+
+    '<span style="margin-left:auto;display:flex;gap:8px">'+
+      '<button class="link" onclick="setAll(1)">Select all</button>'+
+      '<button class="link" onclick="setAll(0)">Clear</button></span></div>'+
+    '<div id="bfBody">'+backfillBody(s)+'</div>'+
+    '<div class="manual"><span class="small">Or add any date manually</span>'+
+      '<div style="display:flex;gap:10px;margin-top:8px">'+
+        '<input class="tinp" style="flex:1" type="date" value="'+ui.bDate+'" onchange="ui.bDate=this.value">'+
+        '<button class="btn primary" onclick="addManual()">Add date</button></div></div></div>';
+}
+
+function backfillBody(s){
+  const existing = new Set(s.lessons.map(l => l.date));
+  const pred = pastWeekly(s.slot, Number(ui.count) || 0);
+  const isOn = d => ui.picked[d] === undefined ? !existing.has(d) : ui.picked[d];
+  const sel = pred.filter(d => !existing.has(d) && isOn(d));
+
+  let h = '<div class="picklist" id="bfList">';
+  pred.forEach(d => {
+    const dup = existing.has(d), on = isOn(d);
+    h += '<button data-d="'+d+'" class="pick'+(dup?" dup":(on?" on":""))+'"'+(dup?" disabled":' onclick="togDate(\''+d+'\')"')+'>'+
+      '<span class="box'+(!dup&&on?" on":"")+'">'+(dup?"–":(on?I.checkSm:""))+'</span>'+
+      '<span class="pdate">'+fmtDate(d)+" · "+DAYS_FULL[s.slot.day]+"</span>"+
+      (dup?'<span class="dupnote">already logged</span>':"")+"</button>";
+  });
+  h += "</div>"+
+    '<button id="bfLog" class="btn primary" style="width:100%;justify-content:center"'+(sel.length?"":" disabled")+
+      ' onclick="logSelected()">Log '+sel.length+" selected "+(sel.length===1?"lesson":"lessons")+"</button>";
+  return h;
+}
+
+// count how many dates are currently ticked
+function selectedDates(s){
+  const existing = new Set(s.lessons.map(l => l.date));
+  const isOn = d => ui.picked[d] === undefined ? !existing.has(d) : ui.picked[d];
+  return pastWeekly(s.slot, Number(ui.count) || 0).filter(d => !existing.has(d) && isOn(d));
+}
+
+// update the "Log N selected" button without touching the list
+function updateLogBtn(){
+  const s = getSel(), b = document.getElementById("bfLog");
+  if(!s || !b) return;
+  const n = selectedDates(s).length;
+  b.textContent = "Log "+n+" selected "+(n===1?"lesson":"lessons");
+  b.disabled = !n;
+}
+
+// flip one row in place — no rebuild, so the scroll position stays put
+function paintRow(d, on){
+  const row = document.querySelector('#bfList button[data-d="'+d+'"]');
+  if(!row) return;
+  row.classList.toggle("on", !!on);
+  const box = row.querySelector(".box");
+  if(box){ box.classList.toggle("on", !!on); box.innerHTML = on ? I.checkSm : ""; }
+}
+
+// refresh only the date list — never the input, so typing keeps focus
+function refreshBackfill(){
+  const s = getSel(), el = document.getElementById("bfBody");
+  if(s && el) el.innerHTML = backfillBody(s);
+}
+
+/* ────────── actions ────────── */
+function select(id){
+  selectedId = id;
+  ui = { edit:false, backfill:false, partial:false, paidOpen:false, openGroups:{}, count:4, picked:{}, bDate:todayISO() };
+  render();
+}
+function tog(k){ ui[k] = !ui[k]; renderPage(); }
+function setCount(v){
+  ui.count = v === "" ? "" : Math.max(1, Math.min(52, Number(v)));
+  refreshBackfill(); // list only — input keeps focus so double digits can be typed
+}
+function fixCount(v){
+  if(v === "" || Number(v) < 1){
+    ui.count = 1;
+    const el = document.getElementById("bfCount");
+    if(el) el.value = 1;
+    refreshBackfill();
+  }
+}
+function setAll(on){
+  const s = getSel(); if(!s) return;
+  const existing = new Set(s.lessons.map(l => l.date));
+  ui.picked = {};
+  pastWeekly(s.slot, Number(ui.count)||0).forEach(d => {
+    if(!existing.has(d)){ ui.picked[d] = !!on; paintRow(d, !!on); }
+  });
+  updateLogBtn();
+}
+function togDate(d){
+  const s = getSel(); if(!s) return;
+  const existing = new Set(s.lessons.map(l => l.date));
+  const cur = ui.picked[d] === undefined ? !existing.has(d) : ui.picked[d];
+  ui.picked[d] = !cur;
+  paintRow(d, !cur);   // in place — list does not scroll back to the top
+  updateLogBtn();
+}
+function edit(patch){
+  const s = getSel(); if(!s) return;
+  Object.assign(s, patch); save(); renderRoster();
+}
+function editSlot(k, v){
+  const s = getSel(); if(!s) return;
+  s.slot = Object.assign({day:1,time:"16:00"}, s.slot, {[k]:v});
+  save(); render();
+}
+function addLessons(dates, makeup){
+  const s = getSel(); if(!s) return 0;
+  const have = new Set(s.lessons.map(l => l.date));
+  const add = dates.filter(d => d && !have.has(d))
+    .map(d => ({id:uid(), date:d, makeup:!!makeup, at:new Date().toISOString()}));
+  if(!add.length){ toast("Already logged"); return 0; }
+  const billed = invoicedTo(s);
+  const frozen = s.lessons.slice(0, billed);          // already on an invoice — never reordered
+  const open = s.lessons.slice(billed).concat(add).sort((a,b) => a.date.localeCompare(b.date));
+  s.lessons = frozen.concat(open);
+  save();
+  return add.length;
+}
+function checkIn(){ if(addLessons([todayISO()], false)) render(); }
+function addManual(){ if(addLessons([ui.bDate], false)) render(); }
+function logSelected(){
+  const s = getSel(); if(!s) return;
+  const n = addLessons(selectedDates(s), false);
+  if(n){ ui.backfill = false; ui.picked = {}; toast("Logged "+n+(n===1?" lesson":" lessons")); render(); }
+}
+function delLesson(lid){
+  const s = getSel(); if(!s) return;
+  const idx = s.lessons.findIndex(l => l.id === lid);
+  if(idx < 0) return;
+  if(idx < invoicedTo(s)){ toast("That lesson is on an invoice — delete the invoice first"); return; }
+  s.lessons = s.lessons.filter(l => l.id !== lid);
+  save(); render();
+}
+function togGroup(id){ ui.openGroups[id] = !ui.openGroups[id]; renderPage(); }
+async function removeStudent(){
+  const s = getSel(); if(!s) return;
+  if(!(await askConfirm("Delete "+s.name+" and all their lesson records? This cannot be undone.", "Delete student", true))) return;
+  students = students.filter(x => x.id !== s.id);
+  selectedId = null; save(); render();
+}
+
+/* ────────── add student ────────── */
+function closeModal(){ document.getElementById("modalRoot").innerHTML = ""; }
+function openAdd(){
+  document.getElementById("modalRoot").innerHTML =
+    '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+
+    "<h2>New student</h2>"+
+    '<label class="field"><span class="flabel">Name</span><input class="inp" id="nName" placeholder="e.g. Mia Chen"></label>'+
+    '<label class="field"><span class="flabel">Parent / guardian name (optional)</span><input class="inp" id="nParent" placeholder="e.g. Jane Hii"></label>'+
+    '<label class="field"><span class="flabel">Email (for invoices and receipts)</span><input class="inp" id="nEmail" type="email" placeholder="name@email.com"></label>'+
+    '<div class="row2"><label class="field" style="flex:1;min-width:150px"><span class="flabel">Lesson day</span><select class="inp" id="nDay">'+
+      DAYS_FULL.map((d,i) => '<option value="'+i+'"'+(i===1?" selected":"")+">"+d+"</option>").join("")+
+    "</select></label>"+
+    '<label class="field" style="width:130px"><span class="flabel">Time</span><input class="inp" id="nTime" type="time" value="16:00"></label></div>'+
+    '<div class="row2">'+
+      '<label class="field" style="flex:1;min-width:140px"><span class="flabel">Price per lesson</span>'+
+        '<input class="inp" id="nRate" type="number" min="0" step="0.5" inputmode="decimal" value="'+(settings.rate||"")+'" placeholder="e.g. 55"></label>'+
+      '<label class="field" style="flex:1;min-width:140px"><span class="flabel">Package price per lesson</span>'+
+        '<input class="inp" id="nBlockRate" type="number" min="0" step="0.5" inputmode="decimal" value="'+(settings.blockRate||"")+'" placeholder="e.g. 50"></label>'+
+    "</div>"+
+    '<div class="small" style="margin:-4px 0 12px;line-height:1.45">Filled in from Settings. The package price is what each lesson costs when '+BLOCK+' are invoiced together. Change either one only if this student pays differently.</div>'+
+    '<div class="acts"><button class="btn" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="doAdd()">Add student</button></div></div></div>';
+  setTimeout(() => document.getElementById("nName").focus(), 40);
+}
+function doAdd(){
+  const name = document.getElementById("nName").value.trim();
+  if(!name){ toast("Enter a name"); return; }
+  const s = {
+    id: uid(), name,
+    email: document.getElementById("nEmail").value.trim(),
+    parent: document.getElementById("nParent").value.trim(),
+    // stored only when it differs from the studio price, so studio changes still reach this student
+    rate: (n => (n > 0 && n !== Number(settings.rate)) ? n : 0)(Number(document.getElementById("nRate").value)),
+    blockRate: (n => (n > 0 && n !== Number(settings.blockRate)) ? n : 0)(Number(document.getElementById("nBlockRate").value)),
+    slot: { day: Number(document.getElementById("nDay").value), time: document.getElementById("nTime").value || "16:00" },
+    lessons: [], invoices: []
+  };
+  students.push(s); save(); closeModal(); select(s.id);
+}
+
+/* ────────── invoice ────────── */
+let invCtx = null;
+let rcptCtx = null;
+function openInvoice(id){
+  const prevOv = document.querySelector("#modalRoot .overlay");
+  const keepTop = (prevOv && invCtx && invCtx.id === id) ? prevOv.scrollTop : 0;
+  requestAnimationFrame(() => {
+    const ov = document.querySelector("#modalRoot .overlay");
+    if(ov && keepTop) ov.scrollTop = keepTop;
+  });
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id); if(!inv) return;
+  invCtx = { sid: s.id, id, blob: null };
+  // build the image now so the share button has it ready on tap
+  invoiceBlob(s, inv).then(async b => {
+    if(!invCtx || invCtx.id !== id) return;
+    invCtx.blob = b;
+    try{ const pdf = await pdfFromImageBlob(b); if(invCtx && invCtx.id === id && invCtx.blob === b) invCtx.pdf = pdf; }catch(e){}
+  }).catch(() => {});
+  const start = inv.from, end = inv.to;
+  const lessons = s.lessons.slice(inv.from-1, inv.to);
+  const RATE = invRate(s, inv);
+  const LINES = invLines(s, inv);
+  const total = invTotal(s, inv);
+  const no = invNo(s, inv);
+  const anyAdj = !!(inv.adj && Object.keys(inv.adj).length);
+
+  // editable rows: amount and an optional note per lesson
+  const rows = LINES.map(l =>
+    '<tr data-n="'+l.n+'"'+(l.amount === 0 ? ' class="freeRow"' : "")+'><td>'+
+      '<div>Guitar lesson '+l.k+(l.makeup?" (make-up)":"")+"</div>"+
+      '<input class="noteIn" value="'+esc(l.note)+'" placeholder="add a note (optional)" '+
+        'onchange="setLineAdj('+l.n+',\'note\',this.value)">'+
+    '</td><td class="c">'+fmtDate(l.date)+'</td>'+
+    '<td class="r"><span class="amtWrap">$<input class="amtIn" data-n="'+l.n+'" type="number" min="0" step="0.5" '+
+      'inputmode="decimal" value="'+l.amount+'" onfocus="this.select()" '+
+      'onchange="setLineAdj('+l.n+',\'amt\',this.value)"></span></td></tr>').join("");
+
+  const head = logoData
+    ? '<img src="'+logoData+'" alt="'+esc(studioName() || "Logo")+'">'
+    : mandala(64, "#4b5263")+(studioParts()[0] ? '<div class="pw">'+esc(studioParts()[0].toUpperCase())+"</div>" : "")+
+      (studioParts()[1] ? '<div class="ps">'+esc(studioParts()[1].toUpperCase())+"</div>" : "");
+
+  // extra items (events) — editable like the lesson lines
+  const xrows = invExtras(inv).map(e =>
+    '<tr class="xRow"><td><input class="exDesc" data-x="'+e.id+'" value="'+esc(e.desc||"")+'" '+
+        'placeholder="e.g. Ensemble workshop" onchange="setExtra(\''+e.id+'\',\'desc\',this.value)"></td>'+
+      '<td class="c"><button class="xbtn" onclick="removeExtra(\''+e.id+'\')" title="Remove this item">'+I.x+"</button></td>"+
+      '<td class="r"><span class="amtWrap">$<input class="amtIn" type="number" min="0" step="0.5" inputmode="decimal" '+
+        'value="'+(Number(e.amount)||0)+'" onfocus="this.select()" onchange="setExtra(\''+e.id+'\',\'amount\',this.value)"></span></td></tr>').join("");
+
+  document.getElementById("modalRoot").innerHTML =
+    '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal wide">'+
+    '<div class="paper" id="sheet">'+
+      '<div class="pLogo">'+head+"</div>"+
+      '<div class="pTop">'+
+        '<div><div class="pTitle">INVOICE</div>'+
+          '<div class="pLbl">Date issued:</div><div class="pVal">'+fmtDate(todayISO())+"</div>"+
+          '<div class="pLbl">Lessons:</div><div class="pVal">'+invSpan(s, inv)+"</div></div>"+
+        '<div class="pWho"><div class="pName">'+esc(billName(s))+"</div>"+
+          (forLine(s) ? '<div class="pSub">'+esc(forLine(s))+"</div>" : "")+
+          (billEmail(s) ? '<div class="pName pEmail">'+esc(billEmail(s))+"</div>" : "")+"</div>"+
+      "</div>"+
+      '<table class="pTable"><thead><tr><th>Description</th><th class="c">Date</th><th class="r">Amount</th></tr></thead>'+
+        "<tbody>"+rows+xrows+"</tbody></table>"+
+      '<button class="link addX" onclick="addExtra()">+ Add an extra item (event, ensemble…)</button>'+
+      '<div class="pkg" id="pkgNote"'+(pkgText(s, inv) ? "" : ' style="display:none"')+'>'+pkgText(s, inv)+"</div>"+
+      '<div class="pTotal"><span>Total due:</span><strong id="invTotalVal">'+money(total)+"</strong></div>"+
+      (hasPayInfo()
+        ? '<div class="pPay"><div class="pLbl">Payment details:</div>'+
+          payLines().map(l => '<div><span class="pVal">'+esc(l[0])+":</span> "+esc(l[1])+"</div>").join("")+"</div>"
+        : "")+
+      '<div class="pThanks">Thank you !</div>'+
+      '<div class="pFoot">'+esc(studioName())+(settings.abn ? (studioName() ? "<br>" : "")+"ABN: "+esc(settings.abn) : "")+"</div>"+
+    "</div>"+
+    '<div class="rateBar">'+
+      '<span class="small">Price per lesson on this invoice</span>'+
+      '<span class="small">$</span>'+
+      '<input class="tinp" id="invRateBox" style="width:78px" type="number" min="0" step="0.5" '+
+        'inputmode="decimal" value="'+RATE+'" onfocus="this.select()" onchange="setInvRate(this.value)">'+
+      '<span class="small">per lesson · '+lessons.length+(lessons.length===1?" lesson":" lessons")+"</span>"+
+      '<button class="link" style="margin-left:auto" onclick="setInvRate(0)">Reset rate</button>'+
+      '<button class="link" id="clrLines" onclick="resetLines()"'+(anyAdj ? "" : ' style="display:none"')+'>Clear line changes</button>'+
+    "</div>"+
+    '<div class="sendTo">'+
+      (billEmail(s)
+        ? '<span>Send to: <strong>'+esc(billName(s))+"</strong> · "+esc(billEmail(s))+"</span>"+
+          '<button class="link" onclick="copyBillEmail()">Copy email</button>'+
+          (canShareFiles() ? '<span class="sendHint">The address is copied for you when you tap Email — in Mail, tap \u201cTo\u201d and paste.</span>' : "")
+        : '<span class="warnTxt">No email saved — add one in Edit details</span>')+
+    "</div>"+
+    '<div class="acts">'+
+      '<button class="btn" onclick="closeModal()">Close</button>'+
+      '<button class="btn primary" onclick="emailInvoice()">'+I.mail+" Email invoice</button>"+
+      '<button class="btn" onclick="printInvoice()">'+I.file+" Save as PDF</button>"+
+      '<button class="btn primary" onclick="markSent()">'+I.check+" Mark as sent</button>"+
+    "</div>"+
+    '<div class="hint">'+(canShareFiles()
+      ? "Email invoice attaches the invoice for you — pick Mail from the share sheet and send."
+      : "This browser can't attach files directly, so Email invoice will help you save the PDF first.")+"</div>"+
+    "</div></div>";
+}
+function pkgText(s, inv){
+  const anyAdj = !!(inv.adj && Object.keys(inv.adj).length);
+  const n = inv.to - inv.from + 1, RATE = invRate(s, inv);
+  return (!anyAdj && n >= BLOCK && RATE < unitRate(s, 1))
+    ? BLOCK+"-lesson package price — "+money(RATE)+" per lesson instead of "+money(unitRate(s,1))
+    : "";
+}
+/* Update the open invoice where it stands — numbers only, no rebuild —
+   so the page keeps its scroll position and the field you tap next. */
+function refreshInvoiceSheet(){
+  const s = ctxStudent(), inv = ctxInv(); if(!s || !inv) return;
+  const root = document.getElementById("modalRoot");
+  invLines(s, inv).forEach(l => {
+    const row = root.querySelector('tr[data-n="'+l.n+'"]');
+    if(row) row.classList.toggle("freeRow", l.amount === 0);
+    const box = root.querySelector('.amtIn[data-n="'+l.n+'"]');
+    if(box && document.activeElement !== box) box.value = l.amount;
+  });
+  const tot = document.getElementById("invTotalVal");
+  if(tot) tot.textContent = money(invTotal(s, inv));
+  const pk = document.getElementById("pkgNote");
+  if(pk){ const t = pkgText(s, inv); pk.textContent = t; pk.style.display = t ? "" : "none"; }
+  const rb = document.getElementById("invRateBox");
+  if(rb && document.activeElement !== rb) rb.value = invRate(s, inv);
+  const cl = document.getElementById("clrLines");
+  if(cl) cl.style.display = (inv.adj && Object.keys(inv.adj).length) ? "" : "none";
+  // the attachable image is rebuilt quietly in the background
+  invCtx.blob = null;
+  invCtx.pdf = null;
+  invoiceBlob(s, inv).then(async b => {
+    if(!invCtx || invCtx.id !== inv.id) return;
+    invCtx.blob = b;
+    try{ const pdf = await pdfFromImageBlob(b); if(invCtx && invCtx.id === inv.id && invCtx.blob === b) invCtx.pdf = pdf; }catch(e){}
+  }).catch(() => {});
+}
+// who the bill goes to: the parent if one is set, otherwise the student
+const parentName = st => String(st.parent || "").trim();
+const billName   = st => parentName(st) || st.name;
+const billEmail  = st => String(st.email || "").trim() || String(st.parentEmail || "").trim();
+const forLine    = st => parentName(st) ? "Student: " + st.name : "";
+/* Price fields for one student. They show the studio price; typing a
+   different number makes it a custom price for this student only. */
+function rateFields(st){
+  const r1 = unitRate(st, 1), rb = unitRate(st, BLOCK);
+  return '<div class="rateBox">'+
+    '<div class="row2">'+
+      '<label class="field rf"><span class="flabel">Price per lesson</span>'+
+        '<span class="moneyIn"><span>$</span><input class="inp" id="rfRate" type="number" min="0" step="0.5" inputmode="decimal" '+
+          'value="'+(r1||"")+'" oninput="editRate(\'rate\',this.value)"></span>'+
+        '<span class="rtag" id="rtag_rate"></span></label>'+
+      '<label class="field rf"><span class="flabel">Package price per lesson</span>'+
+        '<span class="moneyIn"><span>$</span><input class="inp" id="rfBlock" type="number" min="0" step="0.5" inputmode="decimal" '+
+          'value="'+(rb||"")+'" oninput="editRate(\'blockRate\',this.value)"></span>'+
+        '<span class="rtag" id="rtag_blockRate"></span></label>'+
+    "</div>"+
+    '<div class="rateHint" id="rateHint"></div>'+
+  "</div>";
+}
+function paintRateUI(st){
+  [["rate","rtag_rate"],["blockRate","rtag_blockRate"]].forEach(([f, id]) => {
+    const el = document.getElementById(id); if(!el) return;
+    const custom = Number(st[f]) > 0 && Number(st[f]) !== Number(settings[f]);
+    el.innerHTML = custom
+      ? '<span class="rcustom">Custom for this student</span> · <button class="link" onclick="resetRate(\''+f+'\')">Use studio price</button>'
+      : '<span class="rstudio">Studio price</span>';
+  });
+  const h = document.getElementById("rateHint"); if(!h) return;
+  const r1 = unitRate(st, 1), rb = unitRate(st, BLOCK);
+  h.innerHTML = "Single lessons are <b>"+money(r1)+"</b> each. When "+BLOCK+" lessons are invoiced together, each is <b>"+
+    money(rb)+"</b> — <b>"+money(rb*BLOCK)+"</b> for the "+BLOCK+".";
+}
+function editRate(field, v){
+  const st = getSel(); if(!st) return;
+  const n = Number(v), def = Number(settings[field]) || 0;
+  st[field] = (v === "" || !isFinite(n) || n <= 0 || n === def) ? 0 : n;   // 0 = follow the studio price
+  save(); renderRoster(); paintRateUI(st);
+}
+function resetRate(field){
+  const st = getSel(); if(!st) return;
+  st[field] = 0; save();
+  const el = document.getElementById(field === "rate" ? "rfRate" : "rfBlock");
+  if(el) el.value = unitRate(st, field === "rate" ? 1 : BLOCK) || "";
+  paintRateUI(st);
+}
+function copyBillEmail(){
+  const st = ctxStudent() || getSel(); if(!st) return;
+  const e = billEmail(st);
+  if(!e){ toast("No email saved — add one in Edit details"); return; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(e).then(() => toast("Copied "+e)).catch(() => showTextDialog("Email address", e));
+  } else showTextDialog("Email address", e);
+}
+function invNo(s, inv){
+  let code = s.name.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,3);
+  if(!code) code = "STU";
+  const seq = s.invoices.findIndex(i => i.id === inv.id) + 1;
+  return "INV-" + code + "-" + String(seq || 1).padStart(3,"0");
+}
+function invoiceHTML(s, inv){
+  const start = inv.from, end = inv.to;
+  const lessons = s.lessons.slice(inv.from-1, inv.to);
+  const RATE = invRate(s, inv);
+  const LINES = invLines(s, inv);
+  const total = invTotal(s, inv), no = invNo(s, inv);
+  const anyAdj = !!(inv.adj && Object.keys(inv.adj).length);
+  const rows = LINES.map(l =>
+    "<tr><td>"+esc(lineLabel(l))+'</td><td class="c">'+
+    fmtDate(l.date)+'</td><td class="r">'+money(l.amount)+"</td></tr>").join("");
+  const head = logoData
+    ? '<img src="'+logoData+'" style="max-width:150px;max-height:150px;object-fit:contain;margin-bottom:6px">'
+    : '<div style="font-size:25px;font-weight:800;letter-spacing:7px">'+esc(studioParts()[0].toUpperCase())+'</div><div style="font-size:13px;letter-spacing:4px;text-transform:uppercase">'+esc(studioParts()[1])+'</div>';
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
+  "<title>"+esc(invFileName(s, inv).replace(/\.png$/, ""))+"</title><style>"+
+  "*{box-sizing:border-box}body{margin:0;background:#ece7d9;font-family:'Helvetica Neue',Arial,sans-serif;color:#20344f;padding:24px}"+
+  ".sheet{background:#fff;max-width:640px;margin:0 auto;border-radius:12px;padding:38px 42px;box-shadow:0 10px 40px rgba(24,40,56,.15)}"+
+  ".itop{text-align:center}.isite{font-size:11px;color:#8a94a3;margin-top:8px}"+
+  ".irule{height:2px;background:#20344f;margin:20px 0 18px}"+
+  ".imeta{display:flex;justify-content:space-between;gap:14px;margin-bottom:15px}"+
+  ".ikick{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:#9aa3b0;font-weight:700}"+
+  ".istrong{font-size:15px;font-weight:700;margin-top:3px}"+
+  "table{width:100%;border-collapse:collapse;margin-top:8px}"+
+  "th{font-size:10.5px;color:#9aa3b0;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:8px 4px;border-bottom:2px solid #20344f}"+
+  "td{font-size:13px;padding:9px 4px;border-bottom:1px solid #eef0f3}.c{text-align:center;color:#8a94a3}.r{text-align:right}th.c{text-align:center}th.r{text-align:right}"+
+  ".pkg{text-align:right;font-size:12px;color:#8a94a3;margin-top:14px;font-style:italic}"+
+  ".ifor{font-size:13px;color:#8a94a3;margin-top:3px}"+
+  ".pay{margin-top:26px;padding:16px 18px;background:#f7f8fa;border-radius:10px}"+
+  ".payrow{display:flex;justify-content:space-between;gap:14px;font-size:13px;margin-top:7px;color:#8a94a3}"+
+  ".payrow strong{color:#20344f}"+
+  ".totwrap{display:flex;justify-content:flex-end;margin-top:16px}"+
+  ".tot{display:flex;align-items:center;gap:26px;background:#20344f;color:#f4f1e8;border-radius:10px;padding:13px 20px}"+
+  ".totlbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.8}.totval{font-size:23px;font-weight:800}"+
+  ".ifoot{display:flex;justify-content:space-between;gap:14px;margin-top:26px;padding-top:15px;border-top:1px solid #eef0f3;font-size:11px;color:#9aa3b0}"+
+  ".note{max-width:640px;margin:14px auto 0;text-align:center;font-size:12px;color:#8a8471}"+
+  "@media print{body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0}.note{display:none}}"+
+  "</style></head><body><div class='sheet'>"+
+  "<div class='itop'>"+head+"</div><div class='irule'></div>"+
+  "<div class='imeta'><div><div class='ikick'>Billed to</div><div class='istrong'>"+esc(billName(s))+"</div>"+
+    (forLine(s) ? "<div class='ifor'>"+esc(forLine(s))+"</div>" : "")+"</div>"+
+  "<div style='text-align:right'><div class='ikick'>Date issued</div><div class='istrong'>"+fmtDate(todayISO())+"</div></div></div>"+
+  "<div class='imeta'><div></div>"+
+  "<div style='text-align:right'><div class='ikick'>Lessons covered</div><div class='istrong'>"+invSpan(s, inv)+"</div></div></div>"+
+  "<table><thead><tr><th style='text-align:left'>Description</th><th class='c'>Date</th><th class='r'>Amount</th></tr></thead><tbody>"+rows+"</tbody></table>"+
+  (!anyAdj && lessons.length >= BLOCK && RATE < unitRate(s, 1)
+    ? "<div class='pkg'>"+BLOCK+"-lesson package rate applied — "+money(RATE)+" per lesson instead of "+money(unitRate(s,1))+"</div>"
+    : "")+
+  "<div class='totwrap'><div class='tot'><span class='totlbl'>Total due</span><span class='totval'>"+money(total)+"</span></div></div>"+
+  (hasPayInfo()
+    ? "<div class='pay'><div class='ikick'>Payment details</div>"+
+      payLines().map(l => "<div class='payrow'><span>"+esc(l[0])+"</span><strong>"+esc(l[1])+"</strong></div>").join("")+
+      "</div>"
+    : "")+
+  "<div class='ifoot'><span>"+(studioName() ? "Thank you for studying with "+esc(studioName())+"." : "Thank you!")+"</span><span></span></div></div>"+
+  "<div class='note'>To save as PDF: use your browser's Print, then choose Save as PDF.</div></body></html>";
+}
+function ctxStudent(){ return students.find(x => x.id === invCtx.sid); }
+function ctxInv(){ const st = ctxStudent(); return st ? st.invoices.find(i => i.id === invCtx.id) : null; }
+function downloadInvoice(){
+  const s = ctxStudent(); if(!s) return;
+  const blob = new Blob([invoiceHTML(s, ctxInv())], {type:"text/html"});
+  saveFile(invFileName(s, ctxInv()).replace(/\.png$/, ".html"), blob); return;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Invoice_"+invNo(s, ctxInv())+"_"+s.name.replace(/\s+/g,"_")+".html";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast("Invoice downloaded");
+}
+function imagePage(title, img){
+  return '<!doctype html><html><head><meta charset="utf-8"><title>'+esc(title)+'</title>'+
+    "<style>@page{size:A4;margin:0}html,body{margin:0;background:#ebe9e4}"+
+    "img{display:block;margin:0 auto;max-width:100%;max-height:100vh;height:auto}</style>"+
+    '</head><body><img src="'+img+'" alt=""></body></html>';
+}
+async function printInvoice(){
+  const s = ctxStudent(), inv = ctxInv(); if(!s || !inv) return;
+  if(needsReadyFile() && !(invCtx.blob && invCtx.pdf)){ toast("Still preparing the PDF — tap again in a moment"); return; }
+  toast("Preparing PDF…");
+  try{
+    let blob = invCtx.blob;
+    if(!blob){ blob = await invoiceBlob(s, inv); invCtx.blob = blob; }
+    const pdf = invCtx.pdf || await pdfFromImageBlob(blob);
+    const r = await saveFile(pdfName(invFileName(s, inv)), pdf);
+    if(r === "saved") toast("Invoice saved as PDF");
+    else if(r === "failed") toast("Couldn't save the PDF on this device");
+  }catch(e){ toast("Couldn't make the PDF"); }
+}
+/* Turn a rendered invoice/receipt image into a real one-page PDF file.
+   The page is A4 width; its height follows the document (receipts are exactly A4). */
+const drawingOf = new WeakMap();
+async function pdfFromImageBlob(pngBlob){
+  let c = drawingOf.get(pngBlob), im = c;
+  if(!c){                                   // fallback: redraw from the image itself
+    im = await loadImg(await blobToDataURL(pngBlob));
+    if(!im) throw new Error("image");
+    c = document.createElement("canvas");
+    c.width = im.width; c.height = im.height;
+    const cx = c.getContext("2d");
+    cx.fillStyle = "#ffffff"; cx.fillRect(0, 0, c.width, c.height);
+    cx.drawImage(im, 0, 0);
+  }
+  const jpg = await new Promise(r => c.toBlob(r, "image/jpeg", 0.92));
+  if(!jpg) throw new Error("jpeg");
+  const img = new Uint8Array(await jpg.arrayBuffer());
+
+  const pw = 595.28, ph = Math.round(pw * im.height / im.width * 100) / 100;
+  const enc = t => new TextEncoder().encode(t);
+  const parts = [], off = [];
+  let len = 0;
+  const push = b => { parts.push(b); len += b.length; };
+  const obj = (n, body) => { off[n] = len; push(enc(n + " 0 obj\n" + body + "\nendobj\n")); };
+
+  push(enc("%PDF-1.4\n"));
+  push(new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));             // marks the file as binary
+  obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+  obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+  obj(3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pw + " " + ph + "] " +
+         "/Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>");
+  off[4] = len;
+  push(enc("4 0 obj\n<< /Type /XObject /Subtype /Image /Width " + im.width + " /Height " + im.height +
+           " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + img.length + " >>\nstream\n"));
+  push(img);
+  push(enc("\nendstream\nendobj\n"));
+  const draw = "q\n" + pw + " 0 0 " + ph + " 0 0 cm\n/Im0 Do\nQ\n";
+  obj(5, "<< /Length " + draw.length + " >>\nstream\n" + draw + "endstream");
+  const xref = len;
+  let tail = "xref\n0 6\n0000000000 65535 f \n";
+  for(let i = 1; i <= 5; i++) tail += String(off[i]).padStart(10, "0") + " 00000 n \n";
+  tail += "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF\n";
+  push(enc(tail));
+  return new Blob(parts, { type: "application/pdf" });
+}
+const pdfName = name => name.replace(/\.png$/, ".pdf");
+async function shareDoc(pngBlob, pdfBlob, baseName, subject, body, copyText){
+  // prefer a PDF attachment; fall back to the image if this device can't share PDFs
+  const tryFiles = [];
+  if(pdfBlob) tryFiles.push(new File([pdfBlob], pdfName(baseName), { type: "application/pdf" }));
+  if(pngBlob) tryFiles.push(new File([pngBlob], baseName, { type: "image/png" }));
+  const file = tryFiles.find(f => !navigator.canShare || navigator.canShare({ files: [f] }));
+  if(!file) throw Object.assign(new Error("cannot share"), { name: "NotSupported" });
+  const sharing = navigator.share({ files: [file], title: subject, text: body });
+  // the share sheet can't take a recipient, so put the address on the clipboard ready to paste
+  if(copyText){
+    try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(copyText).catch(() => {}); }catch(e){}
+  }
+  await sharing;
+}
+
+/* ────────── render invoice to an image (so it can be attached) ────────── */
+function loadImg(src){
+  return new Promise(res => {
+    if(!src) return res(null);
+    const im = new Image();
+    const t = setTimeout(() => res(null), 3000);          // never wait forever on an image
+    im.onload = () => { clearTimeout(t); res(im); };
+    im.onerror = () => { clearTimeout(t); res(null); };
+    im.src = src;
+  });
+}
+function spaced(ctx, text, cx, y, gap){
+  const w = ctx.measureText(text).width + gap*(text.length-1);
+  let x = cx - w/2;
+  for(const ch of text){ ctx.fillText(ch, x, y); x += ctx.measureText(ch).width + gap; }
+}
+async function invoiceBlob(s, inv){
+  await ensureFonts();
+  const SC = 2, W = 1000, L = 50, R = 950, RX = 540, COLD = 655;
+  const LINES = invLines(s, inv), EX = printExtras(inv), total = invTotal(s, inv);
+  const PL = payLines(), note = pkgText(s, inv);
+  const logo = await loadImg(logoData);
+  const mark = logo ? null : await loadImg(svgData(mandala(120, "#4b5263")));
+  const INK = "#3f4757", SOFT = "#5f6574", BG = "#ebe9e4", RULE = "#cfccc4";
+  const FF = "Montserrat, 'Helvetica Neue', Arial, sans-serif";
+  const F = (sz, w) => (w||400)+" "+sz+"px "+FF;
+
+  // page grows if there are many lines; A4 at minimum
+  const STEP = 44, TOP = 618;
+  const flowEnd = TOP + (LINES.length + EX.length)*STEP + (note ? 44 : 0) + 56 + (PL.length ? 70 + PL.length*32 : 0);
+  const thanksY = Math.max(1138, flowEnd + 90);
+  const H = Math.max(1414, thanksY + 276);
+
+  const cv = document.createElement("canvas");
+  cv.width = W*SC; cv.height = H*SC;
+  const x = cv.getContext("2d"); x.scale(SC, SC);
+  x.fillStyle = BG; x.fillRect(0, 0, W, H);
+  x.textBaseline = "alphabetic";
+
+  // logo
+  if(logo){
+    const k = Math.min(164/logo.width, 150/logo.height);
+    x.drawImage(logo, (W - logo.width*k)/2, 38, logo.width*k, logo.height*k);
+  } else {
+    if(mark) x.drawImage(mark, W/2 - 46, 34, 92, 92);
+    const [big, rest] = studioParts();
+    x.fillStyle = INK; x.textAlign = "center"; x.font = F(30, 700); if(big) x.fillText(big.toUpperCase(), W/2, 162);
+    x.textAlign = "left"; x.font = F(12, 600); if(rest) spaced(x, rest.toUpperCase(), W/2, 181, 2);
+  }
+
+  // left: title, date, lessons
+  x.textAlign = "left"; x.fillStyle = INK;
+  x.font = F(26, 700); x.fillText("INVOICE", L, 298);
+  x.font = F(22, 600); x.fillText("Date issued:", L, 352);
+  x.font = F(22, 400); x.fillStyle = SOFT; x.fillText(fmtDate(todayISO()), L, 388);
+  x.fillStyle = INK; x.font = F(22, 600); x.fillText("Lessons:", L, 436);
+  x.font = F(22, 400); x.fillStyle = SOFT; x.fillText(invSpan(s, inv), L, 472);
+
+  // right: who it's for
+  let ry = 325;
+  x.fillStyle = INK; x.font = F(25, 400); x.fillText(billName(s), RX, ry);
+  if(forLine(s)){ ry += 40; x.fillStyle = SOFT; x.font = F(21, 400); x.fillText(forLine(s), RX, ry); }
+  if(billEmail(s)){
+    ry += forLine(s) ? 44 : 84;
+    let sz = 24; x.font = F(sz, 400);
+    while(sz > 15 && x.measureText(billEmail(s)).width > W - RX - 36){ sz--; x.font = F(sz, 400); }
+    x.fillStyle = INK; x.fillText(billEmail(s), RX, ry);
+  }
+
+  // table
+  x.fillStyle = INK; x.font = F(22, 700); x.textAlign = "left"; x.fillText("Description", L, 556);
+  x.textAlign = "center"; x.fillText("Date", COLD, 556);
+  x.textAlign = "right"; x.fillText("Amount", R, 556);
+  x.fillRect(L, 574, R - L, 1.5);
+
+  let y = TOP;
+  const fitLeft = (t, max) => {
+    let sz = 21; x.font = F(sz, 400);
+    while(sz > 15 && x.measureText(t).width > max){ sz--; x.font = F(sz, 400); }
+    let out = t;
+    if(x.measureText(out).width > max){
+      while(out.length > 3 && x.measureText(out + "…").width > max) out = out.slice(0, -1);
+      out += "…";
+    }
+    x.fillText(out, L, y);
+  };
+  const row = (label, date, amt) => {
+    x.textAlign = "left"; x.fillStyle = INK; fitLeft(label, COLD - L - 95);
+    if(date){ x.textAlign = "center"; x.fillStyle = SOFT; x.font = F(20, 400); x.fillText(date, COLD, y); }
+    x.textAlign = "right"; x.fillStyle = INK; x.font = F(21, 400); x.fillText(money(amt), R, y);
+    y += 17; x.fillStyle = RULE; x.fillRect(L, y, R - L, 1); y += STEP - 17;
+  };
+  LINES.forEach(l => row(lineLabel(l), fmtDate(l.date), l.amount));
+  EX.forEach(e => row(extraLabel(e), "", Number(e.amount)||0));
+
+  if(note){ y += 26; x.textAlign = "right"; x.fillStyle = SOFT; x.font = "italic "+F(17, 400); x.fillText(note, R, y); y += 18; }
+
+  // total
+  y += 56;
+  x.textAlign = "right"; x.fillStyle = SOFT; x.font = F(24, 400); x.fillText("Total due:", R - 200, y);
+  x.fillStyle = INK; x.font = F(28, 700); x.fillText(money(total), R, y);
+
+  // payment details
+  if(PL.length){
+    y += 70; x.textAlign = "left"; x.fillStyle = INK; x.font = F(22, 600); x.fillText("Payment details:", L, y);
+    PL.forEach(p => {
+      y += 32; x.font = F(20, 400);
+      x.fillStyle = SOFT; x.fillText(p[0]+":", L, y);
+      x.fillStyle = INK; x.fillText(p[1], L + 210, y);
+    });
+  }
+
+  // thank you + studio
+  x.textAlign = "left"; x.fillStyle = INK; x.font = F(36, 400); x.fillText("Thank you !", L, thanksY);
+  x.fillStyle = SOFT; x.font = F(19, 500);
+  if(studioName()) spacedLeft(x, studioName(), L, H - 58, 2.6);
+  if(settings.abn) spacedLeft(x, "ABN: " + settings.abn, L, H - 30, 2.6);
+
+  const png = await new Promise(res => cv.toBlob(res, "image/png"));
+  if(png) drawingOf.set(png, cv);          // the PDF builder reuses this drawing
+  return png;
+}
+function spacedLeft(ctx, text, sx, y, gap){
+  let x2 = sx;
+  for(const ch of text){ ctx.fillText(ch, x2, y); x2 += ctx.measureText(ch).width + gap; }
+}
+function canShareFiles(){
+  try{
+    const f = new File(["x"], "t.png", {type:"image/png"});
+    return !!(navigator.canShare && navigator.canShare({files:[f]}) && navigator.share);
+  }catch(e){ return false; }
+}
+
+// one tap: opens the device share sheet with the invoice already attached
+async function shareInvoice(){
+  const s = ctxStudent(); if(!s) return;
+  const {subject, body} = emailText(s, ctxInv());
+  try{
+    // the share sheet must open straight from the tap, so only share once the invoice is ready
+    const blob = invCtx.blob;
+    if(!blob){ toast("Still preparing the invoice — tap Email again in a moment"); return; }
+    await shareDoc(blob, invCtx.pdf, invFileName(s, ctxInv()), subject, body, billEmail(s));
+  }catch(err){
+    if(err && err.name === "AbortError") return;   // user closed the sheet
+    toast("Couldn't open share — use Save as PDF instead");
+  }
+}
+
+
+function emailText(s, inv){
+  const start = inv.from, end = inv.to;
+  const n = end - start + 1, total = invTotal(s, inv);
+  return {
+    subject: String(s.name||"").trim().split(/\s+/)[0]+" - Guitar Lesson Invoice",
+    body: "Hi "+billName(s)+",\n\nPlease find attached the invoice for "+(parentName(s) ? s.name+"'s " : "the ")+"past "+n+
+      (n === 1 ? " guitar lesson (" : " guitar lessons (")+
+      invSpan(s, inv)+")"+extrasPhrase(inv)+".\n\nTotal due: "+money(total)+
+      (payLines().length
+        ? "\n\nPayment details:\n"+payLines().map(l => l[0]+": "+l[1]).join("\n")
+        : "")+
+      signOff()
+  };
+}
+function emailInvoice(){
+  const s = ctxStudent(); if(!s) return;
+  // where attaching works, the device's own share sheet is the picker — no extra popup
+  if(canShareFiles()){ shareInvoice(); return; }
+  const {subject, body} = emailText(s, ctxInv());
+  const to = billEmail(s);
+  const isMac = /Mac/.test(navigator.platform) && !/iPhone|iPad/.test(navigator.userAgent);
+  const isiOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+
+  const defaultLabel = isiOS ? "Apple Mail (default mail app)"
+    : isAndroid ? "Default mail app"
+    : isMac ? "Apple Mail / Outlook (default mail app)"
+    : "Default mail app";
+
+  const opts = [
+    { key:"default", label: defaultLabel, sub:"Opens whichever mail app this device is set to use" },
+    { key:"gmail",   label:"Gmail (in browser)",   sub:"Opens a new Gmail compose window" },
+    { key:"outlook", label:"Outlook (in browser)", sub:"Opens Outlook.com compose" },
+    { key:"copy",    label:"Copy the text instead", sub:"Paste into any app yourself" }
+  ];
+
+  document.getElementById("mailRoot").innerHTML =
+    '<div class="overlay" onclick="if(event.target===this)closeMail()"><div class="modal">'+
+    "<h2>Email this invoice</h2>"+
+    '<div class="small" style="margin:-8px 0 14px">'+
+      (to ? "To: "+esc(to) : "No email saved for this student — add one in Edit details")+"</div>"+
+    '<div class="step">Step 1 — save the invoice</div>'+
+    '<button class="mailopt rec" onclick="printInvoice()">'+
+      '<span class="mailname">Save as PDF</span>'+
+      '<span class="mailsub">Opens the print window — choose Save as PDF, then come back here</span></button>'+
+    '<div class="step">Step 2 — open your email</div>'+
+    opts.map(o =>
+      '<button class="mailopt" onclick="doMail(\''+o.key+'\')">'+
+        '<span class="mailname">'+o.label+"</span>"+
+        '<span class="mailsub">'+o.sub+"</span></button>").join("")+
+    '<div class="small" style="margin-top:12px;line-height:1.45">'+
+      "This browser can't attach files to email, so attach the saved PDF yourself before sending.</div>"+
+    '<div class="acts"><button class="btn" onclick="closeMail()">Cancel</button></div>'+
+    "</div></div>";
+}
+function closeMail(){ document.getElementById("mailRoot").innerHTML = ""; }
+function doMail(kind){
+  const s = ctxStudent(); if(!s) return;
+  const {subject, body} = emailText(s, ctxInv());
+  const to = billEmail(s);
+  closeMail();
+
+  if(kind === "copy"){ copyEmail(); return; }
+
+  let url;
+  if(kind === "gmail"){
+    url = "https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(to)+
+      "&su="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+  } else if(kind === "outlook"){
+    url = "https://outlook.live.com/mail/0/deeplink/compose?to="+encodeURIComponent(to)+
+      "&subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+  } else {
+    url = "mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(subject)+
+      "&body="+encodeURIComponent(body);
+  }
+
+  if(kind === "default"){
+    // mailto must navigate, not open a tab, or nothing happens on some devices
+    window.location.href = url;
+    // if no handler is set, nothing visibly happens — offer the fallback
+    setTimeout(() => {
+      if(!document.hidden) toast("No mail app opened? Try Gmail, Outlook, or Copy");
+    }, 1800);
+  } else {
+    const w = window.open(url, "_blank", "noopener");
+    if(!w) toast("Pop-up blocked — allow pop-ups, or use Copy the text");
+  }
+}
+function copyEmail(){
+  const s = ctxStudent(); if(!s) return;
+  const {subject, body} = emailText(s, ctxInv());
+  const text = "To: "+(billEmail(s)||"(no email set)")+"\nSubject: "+subject+"\n\n"+body;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(() => toast("Email text copied"))
+      .catch(() => showTextDialog("Copy the email text", text));
+  } else showTextDialog("Copy the email text", text);
+}
+function createInvoice(fixed){
+  const s = getSel(); if(!s) return;
+  const left = uninvoiced(s);
+  let n;
+  if(fixed) n = fixed;
+  else {
+    const el = document.getElementById("invQty");
+    n = Math.round(Number(el && el.value) || 0);
+    if(!n || n < 1) n = Math.min(left, BLOCK);
+  }
+  n = Math.min(n, left);
+  if(n < 1){ toast("No lessons to invoice"); return; }
+  const from = invoicedTo(s) + 1;
+  const inv = { id: uid(), from, to: from + n - 1, sent: false, created: todayISO() };
+  s.invoices.push(inv);
+  ui.partial = false;
+  save(); render();
+  openInvoice(inv.id);
+}
+function setInvRate(v){
+  const st = ctxStudent(), inv = ctxInv(); if(!st || !inv) return;
+  const n = Number(v);
+  if(isFinite(n) && n > 0) inv.rate = n; else delete inv.rate;   // 0/blank = back to default
+  save();
+  refreshInvoiceSheet();
+}
+async function deleteInvoice(id){
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id); if(!inv) return;
+  // only the newest can go, otherwise the lesson numbering would have a hole
+  if(s.invoices[s.invoices.length-1].id !== id){
+    toast("Delete the most recent invoice first"); return;
+  }
+  if(!(await askConfirm("Delete this invoice? The lessons go back to not-yet-invoiced.", "Delete invoice", true))) return;
+  s.invoices = s.invoices.filter(i => i.id !== id);
+  save(); render();
+}
+function markSent(){
+  const s = ctxStudent(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === invCtx.id);
+  if(inv) inv.sent = true;
+  save(); closeModal(); render();
+}
+function unmarkSent(id){
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id);
+  if(inv) inv.sent = false;
+  save(); render();
+  toast("Marked as not sent");
+}
+
+/* ────────── logo & backup ────────── */
+
+async function ensureFonts(){
+  if(!document.fonts || !document.fonts.load) return;
+  try{
+    await Promise.race([
+      Promise.all(["400 24px Montserrat","500 20px Montserrat","600 22px Montserrat","700 36px Montserrat"]
+        .map(f => document.fonts.load(f))),
+      new Promise(r => setTimeout(r, 2500))
+    ]);
+  }catch(e){}
+}
+function wrapText(ctx, text, maxW){
+  const out = []; let line = "";
+  String(text).split(" ").forEach(w => {
+    const t = line ? line + " " + w : w;
+    if(line && ctx.measureText(t).width > maxW){ out.push(line); line = w; } else line = t;
+  });
+  if(line) out.push(line);
+  return out;
+}
+const svgData = svg => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+const blobToDataURL = blob => new Promise((res, rej) => {
+  const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob);
+});
+
+/* Receipt as an A4-shaped image, laid out like the studio's own receipt:
+   warm grey page, centred logo, RECEIPT / paid date on the left, payer on the
+   right, a narrow description table, totals, thank-you, signature, ABN. */
+async function receiptBlob(s, inv){
+  await ensureFonts();
+  const SC = 2, W = 1000, H = 1414, L = 50, R = 950, RX = 540;
+  const due = invTotal(s, inv), paid = Number(inv.paid.amount)||0, owing = Math.max(0, due - paid);
+  const logo = await loadImg(logoData);
+  const sig  = await loadImg(settings.sig);
+  const mark = logo ? null : await loadImg(svgData(mandala(120, "#4b5263")));
+
+  const cv = document.createElement("canvas");
+  cv.width = W*SC; cv.height = H*SC;
+  const x = cv.getContext("2d"); x.scale(SC, SC);
+  const INK = "#3f4757", SOFT = "#5f6574", BG = "#ebe9e4";
+  const FF = "Montserrat, 'Helvetica Neue', Arial, sans-serif";
+  const F = (sz, w) => (w||400)+" "+sz+"px "+FF;
+  x.fillStyle = BG; x.fillRect(0, 0, W, H);
+  x.textBaseline = "alphabetic";
+
+  // logo, centred
+  if(logo){
+    const k = Math.min(164/logo.width, 150/logo.height);
+    x.drawImage(logo, (W - logo.width*k)/2, 38, logo.width*k, logo.height*k);
+  } else {
+    if(mark) x.drawImage(mark, W/2 - 46, 34, 92, 92);
+    x.fillStyle = INK; x.textAlign = "center"; x.font = F(30, 700);
+    const [big, rest] = studioParts();
+    if(big) x.fillText(big.toUpperCase(), W/2, 162);
+    x.textAlign = "left"; x.font = F(12, 600);
+    if(rest) spaced(x, rest.toUpperCase(), W/2, 181, 2);
+  }
+
+  // left: title and paid date
+  x.textAlign = "left"; x.fillStyle = INK;
+  x.font = F(26, 700); x.fillText("RECEIPT", L, 298);
+  x.font = F(22, 600); x.fillText("Paid on:", L, 352);
+  x.font = F(22, 400); x.fillStyle = SOFT; x.fillText(fmtDate(inv.paid.on), L, 390);
+
+  // right: who it's for
+  let ry = 325;
+  x.fillStyle = INK; x.font = F(25, 400); x.fillText(billName(s), RX, ry);
+  if(forLine(s)){ ry += 40; x.fillStyle = SOFT; x.font = F(21, 400); x.fillText(forLine(s), RX, ry); }
+  if(billEmail(s)){
+    ry += (forLine(s) ? 44 : 84) - (forLine(s) ? 0 : 0);
+    let sz = 24; x.font = F(sz, 400);
+    while(sz > 15 && x.measureText(billEmail(s)).width > W - RX - 36){ sz--; x.font = F(sz, 400); }
+    x.fillStyle = INK; x.fillText(billEmail(s), RX, ry);
+  }
+
+  // description table
+  x.fillStyle = INK; x.font = F(26, 700);
+  x.fillText("Description", L, 636);
+  x.textAlign = "right"; x.fillText("Amount", R - 8, 636);
+  x.fillRect(L, 656, R - L, 1.5);
+  const items = [[rcptDesc(s, inv), lessonsTotal(s, inv)]]
+    .concat(printExtras(inv).map(e => [extraLabel(e), Number(e.amount) || 0]));
+  let iy = 706, rowEnd = 0;
+  items.forEach(([desc, amt], idx) => {
+    x.textAlign = "left"; x.fillStyle = INK; x.font = F(26, 400);
+    const lines = wrapText(x, desc, 600);
+    lines.forEach((ln, i) => x.fillText(ln, L, iy + i*40));
+    x.textAlign = "right"; x.fillStyle = SOFT; x.font = F(21, 400);
+    x.fillText(money(amt), R - 8, iy - 6);
+    rowEnd = iy + (lines.length - 1)*40 + 24;
+    if(idx < items.length - 1){ x.fillStyle = "#cfccc4"; x.fillRect(L, rowEnd, R - L, 1); iy = rowEnd + 46; }
+  });
+  x.fillStyle = INK; x.fillRect(L, rowEnd, R - L, 1.5);
+
+  // totals
+  let ty = rowEnd + 64;
+  [["Total paid:", money(paid)], ["Total balance owing:", money(owing)]].forEach(([k, v]) => {
+    x.textAlign = "right"; x.fillStyle = SOFT; x.font = F(23, 400); x.fillText(k, R - 190, ty);
+    x.fillStyle = INK; x.fillText(v, R, ty);
+    ty += 53;
+  });
+
+  // thank you, signature, studio
+  x.textAlign = "left"; x.fillStyle = INK; x.font = F(36, 400);
+  x.fillText("Thank you !", L, 1138);
+  if(sig){
+    const k = Math.min(150/sig.width, 66/sig.height);
+    x.drawImage(sig, L, 1220, sig.width*k, sig.height*k);
+  }
+  x.fillStyle = SOFT; x.font = F(19, 500);
+  if(studioName()) spacedLeft(x, studioName(), L, 1356, 2.6);
+  if(settings.abn) spacedLeft(x, "ABN: " + settings.abn, L, 1384, 2.6);
+
+  const png = await new Promise(res => cv.toBlob(res, "image/png"));
+  if(png) drawingOf.set(png, cv);          // the PDF builder reuses this drawing
+  return png;
+}
+
+/* ────────── receipts ────────── */
+function rcptDesc(s, inv){
+  const n = inv.to - inv.from + 1;
+  const full = n >= BLOCK && invRate(s, inv) < unitRate(s, 1);
+  return (full ? "Discounted package of " : "") + n + " guitar lesson" + (n===1?"":"s") +
+         " (" + invSpan(s, inv).replace(/ /g, "\u00a0") + ")";   // keep the date range on one line
+}
+function openReceipt(id){
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id); if(!inv || !inv.paid) return;
+  rcptCtx = { sid: s.id, id, blob: null };
+
+  document.getElementById("modalRoot").innerHTML =
+    '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal wide">'+
+    '<div class="rcptView" id="rcptView"><div class="rcptLoading">Preparing receipt…</div></div>'+
+    '<div class="sendTo">'+
+      (billEmail(s)
+        ? '<span>Send to: <strong>'+esc(billName(s))+"</strong> · "+esc(billEmail(s))+"</span>"+
+          '<button class="link" onclick="copyBillEmail()">Copy email</button>'+
+          (canShareFiles() ? '<span class="sendHint">The address is copied for you when you tap Email — in Mail, tap \u201cTo\u201d and paste.</span>' : "")
+        : '<span class="warnTxt">No email saved — add one in Edit details</span>')+
+    "</div>"+
+    '<div class="acts">'+
+      '<button class="btn" onclick="closeModal()">Close</button>'+
+      '<button class="btn primary" onclick="emailReceipt()">'+I.mail+" Email receipt</button>"+
+      '<button class="btn" onclick="printReceipt()">'+I.file+" Save as PDF</button>"+
+      (inv.receiptSent
+        ? '<span class="sent paidtag">'+I.checkSm+" Receipt sent "+fmtDate(inv.receiptSent)+"</span>"
+        : '<button class="btn primary" onclick="markReceiptSent(\''+inv.id+'\')">'+I.check+" Mark receipt sent</button>")+
+    "</div>"+
+    "</div></div>";
+
+  receiptBlob(s, inv).then(async b => {
+    if(!rcptCtx || rcptCtx.id !== id || !b) return;
+    rcptCtx.blob = b;
+    pdfFromImageBlob(b).then(pdf => { if(rcptCtx && rcptCtx.id === id) rcptCtx.pdf = pdf; }).catch(() => {});
+    const url = await blobToDataURL(b);
+    const v = document.getElementById("rcptView");
+    if(v) v.innerHTML = '<img src="'+url+'" alt="Receipt">';
+  }).catch(() => {
+    const v = document.getElementById("rcptView");
+    if(v) v.innerHTML = '<div class="rcptLoading">Couldn\'t draw the receipt.</div>';
+  });
+}
+function rcptStudent(){ return students.find(x => x.id === rcptCtx.sid); }
+function rcptInv(){ const st = rcptStudent(); return st ? st.invoices.find(i => i.id === rcptCtx.id) : null; }
+
+function rcptFileName(s, inv){ return "Receipt " + s.name + " " + invSpan(s, inv) + ".png"; }
+function invFileName(s, inv){ return "Invoice " + s.name + " " + invSpan(s, inv) + ".png"; }
+function receiptHTML(s, inv, img){
+  return '<!doctype html><html><head><meta charset="utf-8"><title>'+esc(rcptFileName(s, inv).replace(/\.png$/, ""))+'</title>'+
+    "<style>@page{size:A4;margin:0}html,body{margin:0;background:#ebe9e4}img{display:block;width:100%;height:auto}</style>"+
+    '</head><body><img src="'+img+'" alt="Receipt"></body></html>';
+}
+async function printReceipt(){
+  const s = rcptStudent(), inv = rcptInv(); if(!s || !inv) return;
+  if(needsReadyFile() && !(rcptCtx.blob && rcptCtx.pdf)){ toast("Still preparing the PDF — tap again in a moment"); return; }
+  toast("Preparing PDF…");
+  try{
+    let blob = rcptCtx.blob;
+    if(!blob){ blob = await receiptBlob(s, inv); rcptCtx.blob = blob; }
+    const pdf = rcptCtx.pdf || await pdfFromImageBlob(blob);
+    const r = await saveFile(pdfName(rcptFileName(s, inv)), pdf);
+    if(r === "saved") toast("Receipt saved as PDF");
+    else if(r === "failed") toast("Couldn't save the PDF on this device");
+  }catch(e){ toast("Couldn't make the PDF"); }
+}
+function receiptText(s, inv){
+  const due = invTotal(s, inv), paid = Number(inv.paid.amount)||0;
+  const owing = Math.max(0, due - paid);
+  return {
+    subject: String(s.name||"").trim().split(/\s+/)[0]+" - Guitar Lesson Receipt",
+    body: "Hi "+billName(s)+",\n\nThank you for your payment of "+money(paid)+" received on "+
+      fmtDate(inv.paid.on)+(parentName(s) ? " for "+s.name+"'s lessons" : "")+
+      ". Please find your receipt attached.\n\n"+rcptDesc(s, inv)+
+      (owing > 0 ? "\n\nBalance still owing: "+money(owing) : "")+
+      signOff()
+  };
+}
+async function emailReceipt(){
+  const s = rcptStudent(), inv = rcptInv(); if(!s || !inv) return;
+  const {subject, body} = receiptText(s, inv);
+  if(canShareFiles()){
+    try{
+      const blob = rcptCtx.blob;
+      if(!blob){ toast("Still preparing the receipt — tap Email again in a moment"); return; }
+      await shareDoc(blob, rcptCtx.pdf, rcptFileName(s, inv), subject, body, billEmail(s));
+      return;
+    }catch(err){
+      if(err && err.name === "AbortError") return;
+    }
+  }
+  window.location.href = "mailto:"+encodeURIComponent(billEmail(s))+
+    "?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+}
+
+function askPaid(id){
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id); if(!inv) return;
+  const due = invTotal(s, inv);
+  document.getElementById("modalRoot").innerHTML =
+    '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+
+    "<h2>Record payment</h2>"+
+    '<div class="small" style="margin:-8px 0 14px">Lessons '+inv.from+"–"+inv.to+" · "+money(due)+" due</div>"+
+    '<div class="row2">'+
+      '<label class="field" style="flex:1;min-width:140px"><span class="flabel">Date paid</span>'+
+        '<input class="inp" id="pDate" type="date" value="'+todayISO()+'"></label>'+
+      '<label class="field" style="width:140px"><span class="flabel">Amount received</span>'+
+        '<input class="inp" id="pAmt" type="number" min="0" step="0.5" value="'+due+'"></label>'+
+    "</div>"+
+    '<div class="small" style="margin:-4px 0 4px;line-height:1.45">Enter less than the full amount if it was a part payment — the receipt will show the balance still owing.</div>'+
+    '<div class="acts"><button class="btn" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="confirmPaid(\''+id+'\')">Save payment</button></div>'+
+    "</div></div>";
+}
+function confirmPaid(id){
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id); if(!inv) return;
+  const d = (document.getElementById("pDate") || {}).value || todayISO();
+  const a = Number((document.getElementById("pAmt") || {}).value);
+  inv.paid = { on: d, amount: (isFinite(a) && a >= 0) ? a : invTotal(s, inv) };
+  inv.sent = true;
+  save(); closeModal(); render();
+  toast("Payment recorded");
+}
+function markReceiptSent(id){
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id); if(!inv || !inv.paid) return;
+  inv.receiptSent = todayISO();
+  save(); closeModal(); render();
+  toast("Receipt marked as sent");
+}
+function unmarkReceiptSent(id){
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id); if(!inv) return;
+  delete inv.receiptSent;
+  save(); render();
+  toast("Receipt marked as not sent");
+}
+function unmarkPaid(id){
+  const s = getSel(); if(!s) return;
+  const inv = s.invoices.find(i => i.id === id); if(!inv) return;
+  delete inv.paid; delete inv.receiptSent;
+  save(); render();
+  toast("Payment removed");
+}
+function rcptNo(s, inv){ return invNo(s, inv).replace("INV-", "RCT-"); }
+
+function openSettings(){
+  document.getElementById("modalRoot").innerHTML =
+    '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+
+    "<h2>Studio settings</h2>"+
+
+    '<div class="step">Studio</div>'+
+    '<label class="field"><span class="flabel">Studio or business name</span>'+
+      '<input class="inp" id="sStudio" value="'+esc(settings.studio||"")+'" placeholder="e.g. Your Music Studio"></label>'+
+    '<div class="small" style="margin:-4px 0 12px;line-height:1.45">Shown at the top of the app, on invoices and receipts (when no logo is uploaded), and in emails.</div>'+
+    '<div class="step">Lesson prices</div>'+
+    '<div class="small" style="margin-bottom:10px;line-height:1.45">Every student uses these unless you give them their own price. The package price is what <b>each</b> lesson costs when '+BLOCK+' lessons are invoiced together (e.g. $50 each = $500 for 10).</div>'+
+    '<div class="row2">'+
+      '<label class="field" style="flex:1;min-width:130px"><span class="flabel">Price per lesson</span>'+
+        '<input class="inp" id="sRate" type="number" min="0" step="0.5" value="'+(settings.rate||"")+'" placeholder="e.g. 55"></label>'+
+      '<label class="field" style="flex:1;min-width:130px"><span class="flabel">Package price per lesson</span>'+
+        '<input class="inp" id="sBlock" type="number" min="0" step="0.5" value="'+(settings.blockRate||"")+'" placeholder="e.g. 50"></label>'+
+    "</div>"+
+
+    '<div class="step">Payment details</div>'+
+    '<div class="small" style="margin-bottom:10px;line-height:1.45">These appear on every invoice and in the email.</div>'+
+    '<label class="field"><span class="flabel">Account name</span>'+
+      '<input class="inp" id="sPayName" value="'+esc(settings.payName||"")+'" placeholder="e.g. your name or business name"></label>'+
+    '<div class="row2">'+
+      '<label class="field" style="width:140px"><span class="flabel">BSB</span>'+
+        '<input class="inp" id="sBsb" value="'+esc(settings.bsb||"")+'" placeholder="123-456"></label>'+
+      '<label class="field" style="flex:1;min-width:150px"><span class="flabel">Account number</span>'+
+        '<input class="inp" id="sAcct" value="'+esc(settings.acct||"")+'" placeholder="12345678"></label>'+
+    "</div>"+
+
+    '<label class="field"><span class="flabel">ABN (optional)</span>'+
+      '<input class="inp" id="sAbn" value="'+esc(settings.abn||"")+'" placeholder="e.g. 12 345 678 901"></label>'+
+
+    '<div class="step">Logos &amp; signature</div>'+
+    logoSlot("App logo", "Shown at the top of the app. Leave empty to use the built-in mandala.", markData, "pickMark()", "clearMark()")+
+    logoSlot("Invoice &amp; receipt logo", "Printed on invoices and receipts — the logo with the studio name.", logoData, "pickLogo()", "clearLogo()")+
+    logoSlot("Signature", "Appears on receipts.", settings.sig, "pickSig()", "clearSig()")+
+    '<div class="small" style="margin-top:4px;line-height:1.45">PNG images with a transparent background work best.</div>'+
+
+    '<div class="acts"><button class="btn" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="saveSettingsForm()">Save settings</button></div>'+
+    "</div></div>";
+}
+function saveSettingsForm(){
+  const v = id => (document.getElementById(id) || {}).value || "";
+  settings.rate      = Number(v("sRate")) || 0;
+  settings.blockRate = Number(v("sBlock")) || 0;
+  settings.payName   = v("sPayName").trim();
+  settings.bsb       = v("sBsb").trim();
+  settings.acct      = v("sAcct").trim();
+  settings.abn       = v("sAbn").trim();
+  settings.studio    = v("sStudio").trim();
+  saveSettings(); closeModal(); render();
+  toast("Settings saved");
+}
+function hasPayInfo(){ return !!(settings.payName || settings.bsb || settings.acct); }
+function payLines(){
+  const L = [];
+  if(settings.payName) L.push(["Account name", settings.payName]);
+  if(settings.bsb)     L.push(["BSB", settings.bsb]);
+  if(settings.acct)    L.push(["Account number", settings.acct]);
+  return L;
+}
+function pickLogo(){ document.getElementById("logoFile").click(); }
+function pickMark(){ document.getElementById("markFile").click(); }
+function clearLogo(){
+  logoData = null; try{ localStorage.removeItem(LOGO); }catch(e){}
+  if(Cloud.on) queueSync(); render(); openSettings();
+}
+function clearMark(){
+  markData = null; try{ localStorage.removeItem(LOGO_MARK); }catch(e){}
+  if(Cloud.on) queueSync(); render(); openSettings();
+}
+function logoSlot(title, hint, data, pick, clear){
+  return '<div class="logoSlot">'+
+    '<div class="lsPrev">'+(data ? '<img src="'+data+'" alt="">' : "<span>None</span>")+"</div>"+
+    '<div class="lsText"><div class="lsTitle">'+title+'</div><div class="lsHint">'+hint+"</div>"+
+      '<div class="lsBtns"><button class="btn" onclick="'+pick+'">'+(data ? "Change" : "Upload")+"</button>"+
+      (data ? '<button class="link" onclick="'+clear+'">Remove</button>' : "")+"</div></div>"+
+  "</div>";
+}
+function pickSig(){ document.getElementById("sigFile").click(); }
+function clearSig(){ settings.sig = null; saveSettings(); openSettings(); }
+
+
+document.getElementById("markFile").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    const img = await fitImage(r.result);
+    if(!img){ toast("Logo too large — try a smaller image"); return; }
+    markData = img;
+    try{ localStorage.setItem(LOGO_MARK, img); }catch(err){}
+    if(Cloud.on) queueSync();
+    render(); toast("App logo saved");
+    if(document.getElementById("sRate")) openSettings();
+  };
+  r.readAsDataURL(f);
+  e.target.value = "";
+});
+document.getElementById("logoFile").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    const img = await fitImage(r.result);
+    if(!img){ toast("Logo too large — try a smaller image"); return; }
+    logoData = img;
+    try{ localStorage.setItem(LOGO, img); }catch(err){}
+    if(Cloud.on) queueSync();
+    render(); toast("Logo saved");
+    if(document.getElementById("sRate")) openSettings();
+  };
+  r.readAsDataURL(f);
+  e.target.value = "";
+});
+document.getElementById("sigFile").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    const img = await fitImage(r.result);
+    if(!img){ toast("Signature too large — try a smaller image"); return; }
+    settings.sig = img; saveSettings(); openSettings(); toast("Signature saved");
+  };
+  r.readAsDataURL(f);
+  e.target.value = "";
+});
+/* Save a file in whichever way this page can:
+   - published on claude.ai -> the downloads capability (share sheet on the phone app)
+   - opened as a plain file   -> an ordinary browser download            */
+function isIOSDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);   // iPadOS reports as a Mac
+}
+// on the iPad the share sheet must open straight from the tap, so the PDF has to be ready first
+const needsReadyFile = () => !(window.claude && typeof window.claude.use === "function") && isIOSDevice();
+async function saveFile(filename, blob){
+  if(window.claude && typeof window.claude.use === "function"){
+    let dl = null;
+    try{ dl = await window.claude.use("downloads"); }catch(e){ dl = null; }
+    if(dl){
+      try{
+        await dl.save({ filename, data: blob });
+        return "saved";
+      }catch(err){
+        const code = err && err.code;
+        if(code === "declined") return "declined";
+        if(code === "rate_limited"){ toast("A save is already open — finish that one first"); return "busy"; }
+        // anything else: fall through to a plain download attempt
+      }
+    }
+  }
+  if(isIOSDevice() && navigator.share && navigator.canShare){
+    // iPads and iPhones save reliably through the share sheet ("Save to Files")
+    const types = [blob.type || "application/octet-stream"];
+    if(/json/.test(types[0])) types.push("text/plain");      // some versions only share JSON as text
+    for(const t of types){
+      try{
+        const f = new File([blob], filename, { type: t });
+        if(!navigator.canShare({ files: [f] })) continue;
+        await navigator.share({ files: [f] });
+        return "saved";
+      }catch(err){
+        if(err && err.name === "AbortError") return "declined";
+        break;                                                 // fall back to a normal download
+      }
+    }
+  }
+  try{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return "saved";
+  }catch(e){ return "failed"; }
+}
+
+async function exportData(){
+  const payload = { app:"lesson-tracker", version:2, exported:new Date().toISOString(), students, logo:logoData, mark:markData, settings };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const r = await saveFile("lesson-backup-"+todayISO()+".json", blob);
+  if(r === "saved"){
+    try{ localStorage.setItem(LASTBACKUP, new Date().toISOString()); }catch(e){}
+    refreshBackupLabel();
+    toast("Backup saved");
+  } else if(r === "failed"){
+    toast("Couldn't save the backup on this device");
+  }
+}
+/* ────────── restore ──────────
+   The file input is shown inside the panel so the tap goes straight to it —
+   more reliable than a hidden input on published pages. Pasting the backup
+   text is a fallback for devices where picking a file doesn't work. */
+let pendingRestore = null;
+
+function importData(){
+  pendingRestore = null;
+  document.getElementById("modalRoot").innerHTML =
+    '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+
+    "<h2>Restore a backup</h2>"+
+    '<div class="step">Option 1 — choose the backup file</div>'+
+    '<label class="filePick"><input type="file" id="rsFile" accept=".json,application/json,text/plain">'+
+      '<span id="rsFileName">Tap to choose a file</span></label>'+
+    '<div class="step">Option 2 — paste the backup text</div>'+
+    '<textarea class="inp" id="rsText" placeholder="Open the backup file, copy everything in it, and paste it here" '+
+      'style="height:90px;font-size:12px;resize:vertical"></textarea>'+
+    '<button class="btn" style="margin-top:8px" onclick="readPasted()">Check pasted text</button>'+
+    '<div id="rsPreview"></div>'+
+    '<div class="acts"><button class="btn" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" id="rsGo" disabled onclick="doRestore()">Restore</button></div>'+
+    "</div></div>";
+  document.getElementById("rsFile").addEventListener("change", e => {
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    document.getElementById("rsFileName").textContent = f.name;
+    const r = new FileReader();
+    r.onload = () => previewBackup(r.result);
+    r.onerror = () => showRestoreError("Couldn't read that file.");
+    r.readAsText(f);
+  });
+}
+function readPasted(){
+  const t = (document.getElementById("rsText") || {}).value || "";
+  if(!t.trim()){ showRestoreError("Paste the backup text first."); return; }
+  previewBackup(t);
+}
+function showRestoreError(msg){
+  pendingRestore = null;
+  const pv = document.getElementById("rsPreview"); if(pv) pv.innerHTML = '<div class="rsErr">'+esc(msg)+"</div>";
+  const go = document.getElementById("rsGo"); if(go) go.disabled = true;
+}
+function previewBackup(text){
+  let d;
+  try{ d = JSON.parse(String(text).trim()); }catch(e){ showRestoreError("That isn't a lesson tracker backup — the text couldn't be read."); return; }
+  if(!d || !Array.isArray(d.students)){ showRestoreError("That file doesn't contain any student records."); return; }
+  pendingRestore = d;
+  const names = d.students.map(x => esc(x.name || "Unnamed")+" — "+((x.lessons||[]).length)+" lessons").join("<br>");
+  const when = d.exported ? new Date(d.exported).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}) : "unknown date";
+  document.getElementById("rsPreview").innerHTML =
+    '<div class="rsOk"><strong>Backup from '+when+"</strong><br>"+names+
+    (d.settings ? "<br>Includes studio settings" : "")+(d.logo ? " · invoice logo" : "")+(d.mark ? " · app logo" : "")+
+    '<div class="rsWarn">Restoring replaces the students currently in the app.</div></div>';
+  document.getElementById("rsGo").disabled = false;
+}
+function doRestore(){
+  const d = pendingRestore; if(!d) return;
+  students = d.students;
+  students.forEach(migrate);
+  if(d.logo){ logoData = d.logo; try{ localStorage.setItem(LOGO, d.logo); }catch(err){} }
+  if(d.mark){ markData = d.mark; try{ localStorage.setItem(LOGO_MARK, d.mark); }catch(err){} }
+  if(d.settings){ settings = Object.assign(settings, d.settings); saveSettings(); }
+  pendingRestore = null;
+  selectedId = null; save(); closeModal(); render();
+  toast("Backup restored — "+students.length+" student"+(students.length===1?"":"s"));
+}
+
+
+/* ────────── account storage ──────────
+   On claude.ai, everything is kept in the viewer's own private space
+   (data/users/<id>/) so it survives closing the browser and follows the
+   account across devices. Opened as a plain file, the page has no
+   account and keeps data in this browser only. */
+const Cloud = { on:false, col:null, written:{}, busy:false, again:false, retry:null };
+let syncTimer = null;
+
+const docIdFor = sid => "stu_" + String(sid).replace(/[^A-Za-z0-9_\-.~:@+]/g, "_").slice(0, 180);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+// what each account document should contain right now
+function cloudDocs(){
+  const want = {};
+  students.forEach(st => { want[docIdFor(st.id)] = JSON.stringify(st); });
+  const base = Object.assign({}, settings); delete base.sig;
+  want.settings = JSON.stringify(base);
+  if(settings.sig) want.sig  = JSON.stringify({ data: settings.sig });
+  if(logoData)     want.logo = JSON.stringify({ data: logoData });
+  if(markData)     want.logoMark = JSON.stringify({ data: markData });
+  return want;
+}
+
+function queueSync(){
+  if(!Cloud.on) return;
+  setSaveState("saving", "Saving…");
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => { syncTimer = null; syncCloud(); }, 500);
+}
+
+async function syncCloud(){
+  if(!Cloud.on) return;
+  if(Cloud.busy){ Cloud.again = true; return; }
+  Cloud.busy = true;
+  clearTimeout(Cloud.retry);
+  try{
+    const want = cloudDocs();
+    for(const k of Object.keys(want)){                       // one write at a time
+      if(Cloud.written[k] !== want[k]){
+        await Cloud.col.doc(k).set(JSON.parse(want[k]));
+        Cloud.written[k] = want[k];
+      }
+    }
+    for(const k of Object.keys(Cloud.written)){              // removed students / images
+      if(!(k in want)){ await Cloud.col.doc(k).delete(); delete Cloud.written[k]; }
+    }
+    const when = new Date().toISOString();
+    try{ localStorage.setItem(LASTSAVE, when); }catch(e){}
+    setSaveState("ok", savedLabel(when));
+  }catch(err){
+    const code = err && err.code;
+    if(code === "quota_exceeded"){
+      setSaveState("error", "Account storage is full — not saved");
+    } else if(code === "invalid_argument"){
+      setSaveState("error", "Couldn't save one item to your account");
+    } else if(code === "revoked" || code === "not_granted" || code === "capability_disabled"){
+      Cloud.on = false;
+      setSaveState("error", "Lost connection to your account — saving on this device only");
+    } else {
+      setSaveState("error", "Not saved yet — retrying…");
+      Cloud.retry = setTimeout(syncCloud, 4000 + Math.random()*2000);
+    }
+  }finally{
+    Cloud.busy = false;
+    if(Cloud.again){ Cloud.again = false; syncCloud(); }
+  }
+}
+
+// read everything from the account into the app
+async function pullCloud(){
+  const snap = await Cloud.col.get();
+  const docs = {};
+  snap.docs.forEach(d => { if(d.exists) docs[d.id] = clone(d.data()); });
+  const stuKeys = Object.keys(docs).filter(k => k.indexOf("stu_") === 0);
+  const found = stuKeys.length || docs.settings || docs.logo || docs.sig;
+  if(!found) return false;
+
+  students = stuKeys.map(k => migrate(docs[k]))
+                    .sort((a,b) => String(a.name||"").localeCompare(String(b.name||"")));
+  settings = Object.assign({ studio:"", rate:0, blockRate:0, payName:"", bsb:"", acct:"", abn:"", sig:null },
+                           docs.settings || {});
+  settings.sig = docs.sig ? docs.sig.data : null;
+  logoData = docs.logo ? docs.logo.data : null;
+  markData = docs.logoMark ? docs.logoMark.data : null;
+
+  // remember what's already stored, so only real changes are written back
+  Cloud.written = {};
+  Object.keys(docs).forEach(k => {
+    if(k.indexOf("stu_") === 0) Cloud.written[k] = JSON.stringify(students.find(x => docIdFor(x.id) === k));
+  });
+  const w = cloudDocs();
+  if(docs.settings) Cloud.written.settings = w.settings;
+  if(docs.sig)      Cloud.written.sig = w.sig;
+  if(docs.logo)     Cloud.written.logo = w.logo;
+  if(docs.logoMark) Cloud.written.logoMark = w.logoMark;
+
+  // refresh this browser's cache
+  try{ localStorage.setItem(KEY, JSON.stringify(students)); }catch(e){}
+  try{ localStorage.setItem(SET, JSON.stringify(settings)); }catch(e){}
+  try{ if(logoData) localStorage.setItem(LOGO, logoData); else localStorage.removeItem(LOGO); }catch(e){}
+  try{ if(markData) localStorage.setItem(LOGO_MARK, markData); else localStorage.removeItem(LOGO_MARK); }catch(e){}
+  return true;
+}
+
+async function connectCloud(){
+  if(!(window.claude && typeof window.claude.use === "function")) return;   // plain file
+  setSaveState("saving", "Connecting to your account…");
+  let db = null, user = null;
+  try{ [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]); }catch(e){}
+  if(!db || !user){ initSaveBar(); return; }
+  let uid = null;
+  try{ uid = await user.id(); }catch(e){}
+  if(!uid){ initSaveBar(); return; }
+
+  Cloud.col = db.collection("data/users/" + uid);
+  try{
+    const had = await pullCloud();
+    Cloud.on = true;
+    if(had){
+      if(selectedId && !students.some(x => x.id === selectedId)) selectedId = null;
+      render();
+      setSaveState("ok", savedLabel(new Date().toISOString()));
+    } else {
+      // first visit with account storage: move this device's records up
+      Cloud.written = {};
+      await syncCloud();
+    }
+  }catch(e){
+    Cloud.on = false;
+    setSaveState("error", "Couldn't reach your account — saving on this device only");
+  }
+}
+
+// coming back to the page (e.g. after using another device): pick up changes
+document.addEventListener("visibilitychange", async () => {
+  if(document.visibilityState !== "visible" || !Cloud.on) return;
+  if(Cloud.busy || syncTimer) return;                 // don't overwrite unsaved edits
+  if(document.querySelector("#modalRoot .overlay, #confirmRoot .overlay")) return;
+  try{
+    if(await pullCloud()){
+      if(selectedId && !students.some(x => x.id === selectedId)) selectedId = null;
+      render();
+    }
+  }catch(e){}
+});
+
+/* Keep images small enough for account storage (each item is limited in size). */
+function shrinkImage(src, maxW){
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, maxW / im.width);
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(im.width * k));
+      c.height = Math.max(1, Math.round(im.height * k));
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      res({ url: c.toDataURL("image/png"), w: im.width });
+    };
+    im.onerror = () => res(null);
+    im.src = src;
+  });
+}
+async function fitImage(src){
+  const LIMIT = 230000;
+  let first = await shrinkImage(src, 700);
+  if(!first) return null;
+  if(src.length < LIMIT && first.w <= 700) return src;     // already small — keep as is
+  let out = first.url;
+  for(const w of [520, 380, 260]){
+    if(out.length < LIMIT) break;
+    const r = await shrinkImage(src, w); if(r) out = r.url;
+  }
+  return out.length < LIMIT ? out : null;
+}
+
+/* ────────── in-app dialogs (native confirm/prompt are blocked on published pages) ────────── */
+function askConfirm(message, okLabel, danger){
+  return new Promise(resolve => {
+    const root = document.getElementById("confirmRoot");
+    const done = v => { root.innerHTML = ""; resolve(v); };
+    root.innerHTML =
+      '<div class="overlay"><div class="modal" style="max-width:380px">'+
+      '<div style="font-size:15px;line-height:1.5;color:var(--navy)">'+esc(message)+"</div>"+
+      '<div class="acts"><button class="btn" id="cfNo">Cancel</button>'+
+      '<button class="btn primary'+(danger?" dangerFill":"")+'" id="cfYes">'+esc(okLabel||"OK")+"</button></div>"+
+      "</div></div>";
+    document.getElementById("cfNo").onclick  = () => done(false);
+    document.getElementById("cfYes").onclick = () => done(true);
+    root.querySelector(".overlay").onclick = e => { if(e.target === e.currentTarget) done(false); };
+  });
+}
+function showTextDialog(title, text){
+  const root = document.getElementById("confirmRoot");
+  root.innerHTML =
+    '<div class="overlay"><div class="modal">'+
+    "<h2>"+esc(title)+"</h2>"+
+    '<textarea class="inp" id="txOut" readonly style="height:220px;font-size:13px;line-height:1.45;resize:vertical">'+esc(text)+"</textarea>"+
+    '<div class="small" style="margin-top:8px">Press and hold, then Select All and Copy.</div>'+
+    '<div class="acts"><button class="btn primary" id="txClose">Done</button></div>'+
+    "</div></div>";
+  document.getElementById("txClose").onclick = () => { root.innerHTML = ""; };
+  const ta = document.getElementById("txOut"); ta.focus(); ta.select();
+}
+
+/* ────────── boot ────────── */
+load(); render(); initSaveBar(); connectCloud();
+if(!window.claude && navigator.storage && navigator.storage.persist){ navigator.storage.persist().catch(() => {}); }
+setInterval(renderRoster, 60000); // keep "now" highlighting current
+</script>
+<script>
+/* Lets the app open even without internet, once it has been opened online.
+   Always tries the internet first, so updates you upload show up straight away. */
+if("serviceWorker" in navigator && location.protocol === "https:"){
+  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
+}
+</script>
+</body>
+</html>
